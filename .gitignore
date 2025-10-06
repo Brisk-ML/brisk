@@ -24,3 +24,5 @@ working_report_data.json
 
 *.pyc
 .DS_Store
+
+old_suite/*

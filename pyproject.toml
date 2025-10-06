@@ -35,3 +35,6 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 brisk = "brisk.cli.cli:cli"
+
+[tool.pytest.ini_options]
+norecursedirs = ["old_suite"]
