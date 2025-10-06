@@ -28,6 +28,7 @@ shap="^0.48.0"
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
 pytest-cov = "^6.0.0"
+pytest-timeout = "^2.3.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -38,3 +39,13 @@ brisk = "brisk.cli.cli:cli"
 
 [tool.pytest.ini_options]
 norecursedirs = ["old_suite"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
