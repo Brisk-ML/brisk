@@ -6,19 +6,19 @@ writing tests easier and more maintainable.
 Quick Start:
     # Factories - create test data with flexible parameters
     from tests.utils.factories import DataFrameFactory, AlgorithmFactory
-    
+
     df = DataFrameFactory.simple(rows=100)
     algorithms = AlgorithmFactory.collection(n=3)
-    
+
     # Mocks - fake objects for isolated unit tests
     from tests.utils.mocks import MockServiceBundle, MockModel
-    
+
     services = MockServiceBundle()
     model = MockModel(predictions=[0, 1, 0, 1])
-    
+
     # Assertions - better error messages
     from tests.utils.assertions import assert_dataframe_equal, assert_files_exist
-    
+
     assert_dataframe_equal(actual_df, expected_df)
     assert_files_exist(output_dir, ["model.pkl", "metrics.json"])
 """
@@ -31,7 +31,6 @@ from tests.utils.factories import (
     DataManagerFactory,
     ExperimentGroupFactory,
     ConfigurationFactory,
-    FileFactory,
 )
 
 # Expose commonly used mocks
@@ -49,8 +48,6 @@ from tests.utils.mocks import (
 # Expose commonly used assertions
 from tests.utils.assertions import (
     assert_dataframe_equal,
-    assert_series_equal,
-    assert_array_almost_equal,
     assert_files_exist,
     assert_dict_contains,
     assert_dict_equal,
@@ -58,7 +55,6 @@ from tests.utils.assertions import (
     assert_in_range,
     assert_has_attributes,
     assert_is_instance_of,
-    assert_service_called,
     assert_no_missing_values,
     assert_columns_equal,
 )
@@ -71,7 +67,6 @@ __all__ = [
     "DataManagerFactory",
     "ExperimentGroupFactory",
     "ConfigurationFactory",
-    "FileFactory",
     # Mocks
     "MockServiceBundle",
     "MockModel",
@@ -83,8 +78,6 @@ __all__ = [
     "create_mock_split",
     # Assertions
     "assert_dataframe_equal",
-    "assert_series_equal",
-    "assert_array_almost_equal",
     "assert_files_exist",
     "assert_dict_contains",
     "assert_dict_equal",
@@ -92,7 +85,6 @@ __all__ = [
     "assert_in_range",
     "assert_has_attributes",
     "assert_is_instance_of",
-    "assert_service_called",
     "assert_no_missing_values",
     "assert_columns_equal",
 ]

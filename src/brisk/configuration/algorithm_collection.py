@@ -8,7 +8,7 @@ Classes
 -------
 AlgorithmCollection : list
     A collection class for managing AlgorithmWrapper instances with
-    name-based lookup functionality
+   string and int lookup functionality
 """
 from typing import Union
 
@@ -18,8 +18,8 @@ class AlgorithmCollection(list):
     """A collection for managing AlgorithmWrapper instances.
 
     Provides both list-like and dict-like access to AlgorithmWrapper objects,
-    with name-based lookup functionality. Inherits from list to provide
-    standard list operations while adding dictionary-style key access.
+    Inherits from list to provide standard list operations while adding 
+    dictionary-style key access.
 
     Parameters
     ----------
@@ -32,16 +32,16 @@ class AlgorithmCollection(list):
 
     Notes
     -----
-    The collection maintains uniqueness of algorithm names and provides
-    both index-based and name-based access to algorithms. This allows
-    for flexible algorithm management in Brisk configurations.
+    The collection maintains uniqueness of algorithm names.
 
     Examples
     --------
     Create a collection with algorithms:
         >>> from brisk.configuration import AlgorithmWrapper
-        >>> alg1 = AlgorithmWrapper("linear", LinearRegression())
-        >>> alg2 = AlgorithmWrapper("rf", RandomForestClassifier())
+        >>> alg1 = AlgorithmWrapper("linear", "Linear Reg", LinearRegression())
+        >>> alg2 = AlgorithmWrapper(
+        >>>            "rf", "Random Forest", RandomForestClassifier()
+        >>>        )
         >>> collection = AlgorithmCollection(alg1, alg2)
 
     Access by index:
@@ -59,7 +59,7 @@ class AlgorithmCollection(list):
     """
     def __init__(self, *args):
         """Initialize the AlgorithmCollection with optional initial algorithms.
-        
+
         Parameters
         ----------
         *args : AlgorithmWrapper
@@ -98,7 +98,7 @@ class AlgorithmCollection(list):
         --------
         Add a new algorithm:
             >>> collection = AlgorithmCollection()
-            >>> alg = AlgorithmWrapper("svm", SVC())
+            >>> alg = AlgorithmWrapper("svm", "SVC", SVC())
             >>> collection.append(alg)
         """
         if not isinstance(item, algorithm_wrapper.AlgorithmWrapper):

@@ -6,10 +6,10 @@ parameters or need to create multiple instances with different configurations.
 
 Usage:
     from tests.utils.factories import DataFrameFactory, AlgorithmFactory
-    
+
     # Create test data with custom size
     df = DataFrameFactory.simple(rows=100, cols=5)
-    
+
     # Create algorithm collection
     algorithms = AlgorithmFactory.collection(n=3)
 """
@@ -52,12 +52,12 @@ class DataFrameFactory:
     @staticmethod
     def simple(rows: int = 5, cols: int = 2, seed: int = 42) -> pd.DataFrame:
         """Create a simple DataFrame for testing.
-        
+
         Args:
             rows: Number of rows
             cols: Number of feature columns (target column added automatically)
             seed: Random seed for reproducibility
-            
+
         Returns:
             DataFrame with numeric features and target column
         """
@@ -73,12 +73,12 @@ class DataFrameFactory:
         seed: int = 42
     ) -> Tuple[pd.DataFrame, pd.Series]:
         """Create regression dataset with linear relationship.
-        
+
         Args:
             rows: Number of rows
             noise: Amount of noise to add to target
             seed: Random seed
-            
+
         Returns:
             Tuple of (X, y) where y = 2*x1 + 3*x2 + noise
         """
@@ -101,12 +101,12 @@ class DataFrameFactory:
         seed: int = 42
     ) -> Tuple[pd.DataFrame, pd.Series]:
         """Create classification dataset.
-        
+
         Args:
             rows: Number of rows
             n_classes: Number of classes
             seed: Random seed
-            
+
         Returns:
             Tuple of (X, y) for classification
         """
@@ -125,12 +125,12 @@ class DataFrameFactory:
         seed: int = 42
     ) -> pd.DataFrame:
         """Create DataFrame with missing values.
-        
+
         Args:
             rows: Number of rows
             missing_pct: Percentage of values to make missing (0.0 to 1.0)
             seed: Random seed
-            
+
         Returns:
             DataFrame with missing values
         """
@@ -148,13 +148,13 @@ class DataFrameFactory:
         seed: int = 42
     ) -> pd.DataFrame:
         """Create DataFrame with categorical features.
-        
+
         Args:
             rows: Number of rows
             n_categories: Number of unique categories
             categorical_cols: Number of categorical columns
             seed: Random seed
-            
+
         Returns:
             DataFrame with both numeric and categorical features
         """
@@ -174,12 +174,12 @@ class DataFrameFactory:
         seed: int = 42
     ) -> pd.DataFrame:
         """Create DataFrame with group column for grouped splitting.
-        
+
         Args:
             rows: Number of rows
             n_groups: Number of groups
             seed: Random seed
-            
+
         Returns:
             DataFrame with 'group' column
         """
@@ -192,10 +192,10 @@ class DataFrameFactory:
     @staticmethod
     def from_csv_string(csv_string: str) -> pd.DataFrame:
         """Create DataFrame from CSV string (useful for inline test data).
-        
+
         Args:
             csv_string: CSV formatted string
-            
+
         Returns:
             DataFrame parsed from CSV string
         """
@@ -217,7 +217,7 @@ class AlgorithmFactory:
     @staticmethod
     def ridge(with_hyperparams: bool = False) -> AlgorithmWrapper:
         """Create ridge regression algorithm.
-        
+
         Args:
             with_hyperparams: If True, include hyperparameter grid
         """
@@ -235,7 +235,7 @@ class AlgorithmFactory:
     @staticmethod
     def random_forest(with_hyperparams: bool = False) -> AlgorithmWrapper:
         """Create random forest algorithm.
-        
+
         Args:
             with_hyperparams: If True, include hyperparameter grid
         """
@@ -257,11 +257,11 @@ class AlgorithmFactory:
         include_hyperparams: bool = False
     ) -> AlgorithmCollection:
         """Create an algorithm collection.
-        
+
         Args:
             n: Number of algorithms (1-4)
             include_hyperparams: Whether to include hyperparameter grids
-            
+
         Returns:
             AlgorithmCollection with n algorithms
         """
@@ -343,7 +343,7 @@ class MetricFactory:
     @staticmethod
     def regression_manager(n_metrics: int = 3) -> MetricManager:
         """Create a metric manager for regression.
-        
+
         Args:
             n_metrics: Number of metrics (1-3)
         """
@@ -389,7 +389,7 @@ class DataManagerFactory:
     @staticmethod
     def simple(test_size: float = 0.2, random_state: int = 42) -> DataManager:
         """Create a simple data manager.
-        
+
         Args:
             test_size: Fraction of data for test set
             random_state: Random seed
@@ -405,7 +405,7 @@ class DataManagerFactory:
         test_size: float = 0.2
     ) -> DataManager:
         """Create data manager with cross-validation.
-        
+
         Args:
             n_splits: Number of CV splits
             test_size: Test set size
@@ -423,7 +423,7 @@ class DataManagerFactory:
         encode_categorical: bool = False
     ) -> DataManager:
         """Create data manager with preprocessing pipeline.
-        
+
         Args:
             scaling: Whether to include scaling
             handle_missing: Whether to handle missing values
@@ -464,7 +464,7 @@ class ExperimentGroupFactory:
         algorithms: Optional[List[str]] = None
     ) -> ExperimentGroup:
         """Create a simple experiment group.
-        
+
         Args:
             name: Group name
             workflow: Workflow name
@@ -516,7 +516,7 @@ class ConfigurationFactory:
         algorithms: Optional[List[str]] = None
     ) -> Configuration:
         """Create a simple configuration.
-        
+
         Args:
             workflow: Default workflow name
             algorithms: Default algorithm names
