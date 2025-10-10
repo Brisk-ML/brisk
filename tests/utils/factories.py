@@ -222,7 +222,7 @@ class AlgorithmFactory:
             with_hyperparams: If True, include hyperparameter grid
         """
         hyperparam_grid = {
-            "alpha": [0.1, 1.0, 10.0]
+            "alpha": [0.1, 0.5, 1.0]
         } if with_hyperparams else None
         return AlgorithmWrapper(
             name="ridge",

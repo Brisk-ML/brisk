@@ -1,9 +1,9 @@
 """Provides the AlgorithmWrapper class for managing machine learning algorithms.
 
-This module provides classes for managing algorithms implementations, their
-default parameters, and hyperparameter grids. It includes functionality for 
-model instantiation, parameter tuning, and configuration serialization to 
-reproduce experiments.
+This module provides classes for managing machine learning algorithms, their
+parameters, and hyperparameter grids. It includes functionality for model
+instantiation, parameter tuning, and configuration serialization for
+reproducible experiments.
 
 Classes
 -------
@@ -22,10 +22,10 @@ from brisk.reporting import formatting
 class AlgorithmWrapper:
     """A wrapper class for machine learning algorithms.
 
-    This module provides classes for managing algorithms implementations, their
-    default parameters, and hyperparameter grids. It includes functionality for 
-    model instantiation, parameter tuning, and configuration serialization for
-    reproducible experiments.
+    Provides methods to instantiate models with default or tuned parameters
+    and manages hyperparameter grids for model tuning. This class serves as
+    a bridge between Brisk's configuration system and scikit-learn algorithms,
+    enabling consistent parameter management and model instantiation.
 
     Parameters
     ----------
@@ -119,7 +119,7 @@ class AlgorithmWrapper:
 
         Notes
         -----
-        The constructor performs validation:
+        The constructor performs comprehensive validation:
         - Ensures name and display_name are strings
         - Validates algorithm_class is a class from scikit-learn
         - Converts None parameters to empty dictionaries
@@ -213,7 +213,7 @@ class AlgorithmWrapper:
         Notes
         -----
         The instantiated model will have a 'wrapper_name' attribute set
-        to the algorithm's name, which is used for identification
+        to the algorithm's name, which can be useful for identification
         in evaluation and reporting contexts.
 
         Examples
@@ -343,9 +343,9 @@ class AlgorithmWrapper:
     def export_config(self) -> Dict[str, Any]:
         """Export this AlgorithmWrapper's configuration for rerun functionality.
         
-        Creates a dictionary that can be used to recreate this AlgorithmWrapper 
-        instance. Handles complex objects like scikit-learn estimators by 
-        serializing their parameters.
+        Creates a serialized configuration dictionary that can be used to
+        recreate this AlgorithmWrapper instance. Handles complex objects
+        like scikit-learn estimators by serializing their parameters.
 
         Returns
         -------
