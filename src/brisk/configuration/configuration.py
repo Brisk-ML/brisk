@@ -70,12 +70,6 @@ class Configuration:
     plot_settings : PlotSettings
         Plot configuration settings
 
-    Notes
-    -----
-    The Configuration class serves as the main user interface for setting up
-    experiments. It provides a fluent API for adding experiment groups and
-    automatically handles validation and default value assignment.
-
     Examples
     --------
     Create a simple configuration:
@@ -143,7 +137,7 @@ class Configuration:
         data_config: Optional[Dict[str, Any]] = None,
         algorithms: Optional[List[str]] = None,
         algorithm_config: Optional[Dict[str, Dict[str, Any]]] = None,
-        description: Optional[str] = "",
+        description: Optional[str] = "No description set.",
         workflow: Optional[str] = None,
         workflow_args: Optional[Dict[str, Any]] = None
     ) -> None:

@@ -414,6 +414,8 @@ class MockRerunService(MockBaseService):
         """Add workflow file (no-op in mock)."""
         pass
 
+    def collect_dataset_metadata(self, groups_json):
+        pass
 
 class MockServiceBundle:
     """Complete mock service bundle for testing.

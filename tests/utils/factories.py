@@ -13,7 +13,7 @@ Usage:
     # Create algorithm collection
     algorithms = AlgorithmFactory.collection(n=3)
 """
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict, Any
 from io import StringIO
 
 import pandas as pd
@@ -524,6 +524,24 @@ class ConfigurationFactory:
         config = Configuration(
             default_workflow=workflow,
             default_algorithms=algorithms or ["linear"]
+        )
+        return config
+
+    @staticmethod
+    def full(
+        workflow: str = "test_workflow",
+        algorithms: Optional[List[str]] = None,
+        categorical_features: Optional[Dict] = None,
+        workflow_args: Optional[Dict] = None,
+        plot_settings: Optional[Any] = None
+    ) -> Configuration:
+        """Create a configuration with all arguments."""
+        config = Configuration(
+            default_workflow=workflow,
+            default_algorithms=algorithms or ["linear"],
+            categorical_features=categorical_features,
+            default_workflow_args=workflow_args,
+            plot_settings=plot_settings
         )
         return config
 
