@@ -128,7 +128,7 @@ class ExperimentFactory:
         experiments = collections.deque()
         group_algo_config = group.algorithm_config or {}
 
-        algorithm_groups = self._normalize_algorithms(group.algorithms)
+        algorithm_groups = self.normalize_algorithms(group.algorithms)
 
         for dataset_path, table_name in group.dataset_paths:
             for algo_group in algorithm_groups:
@@ -207,7 +207,7 @@ class ExperimentFactory:
 
         return wrapper
 
-    def _normalize_algorithms(
+    def normalize_algorithms(
         self,
         algorithms: List[Union[str, List[str]]]
     ) -> List[List[str]]:
