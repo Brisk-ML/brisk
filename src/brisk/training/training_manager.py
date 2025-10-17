@@ -170,11 +170,12 @@ class TrainingManager:
             self.metric_config
         )
 
-        self.data_managers = config_manager.data_managers
-        self.experiments = config_manager.experiment_queue
-        self.logfile = config_manager.logfile
-        self.output_structure = config_manager.output_structure
-        self.description_map = config_manager.description_map
+        config_manager.create_data_splits()
+        self.data_managers = config_manager.get_data_managers()
+        self.experiments = config_manager.get_experiment_queue()
+        self.logfile = config_manager.create_logfile()
+        self.output_structure = config_manager.get_output_structure()
+        self.description_map = config_manager.get_description_map()
         self.experiment_groups = config_manager.experiment_groups
         self.workflow_mapping = config_manager.workflow_map
         self.experiment_paths = collections.defaultdict(

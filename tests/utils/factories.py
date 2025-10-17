@@ -15,6 +15,7 @@ Usage:
 """
 from typing import List, Optional, Tuple, Dict, Any
 from io import StringIO
+from unittest.mock import patch
 
 import pandas as pd
 import numpy as np
@@ -36,6 +37,7 @@ from brisk.data.preprocessing import (
     ScalingPreprocessor,
     MissingDataPreprocessor,
     CategoricalEncodingPreprocessor,
+    BasePreprocessor
 )
 from brisk.configuration import (
     AlgorithmWrapper,
@@ -387,7 +389,8 @@ class DataManagerFactory:
     """Factory for creating test data managers."""
 
     @staticmethod
-    def simple(test_size: float = 0.2, random_state: int = 42) -> DataManager:
+    @patch("brisk.data.data_manager.get_services")
+    def simple(mock_services, test_size: float = 0.2, random_state: int = 42) -> DataManager:
         """Create a simple data manager.
 
         Args:
@@ -397,6 +400,32 @@ class DataManagerFactory:
         return DataManager(
             test_size=test_size,
             random_state=random_state
+        )
+
+    @staticmethod
+    @patch("brisk.data.data_manager.get_services")
+    def full(
+        mock_services,
+        test_size: float = 0.2,
+        n_splits: int = 5,
+        split_method: str = "shuffle",
+        group_column: Optional[str] = None,
+        stratified: bool = False,
+        random_state: Optional[int] = None,
+        problem_type: str = "classification",
+        algorithm_config=None,
+        preprocessors: Optional[List[BasePreprocessor]] = None,
+    ):
+        return DataManager(
+            test_size=test_size,
+            n_splits=n_splits,
+            split_method=split_method,
+            group_column=group_column,
+            stratified=stratified,
+            random_state=random_state,
+            problem_type=problem_type,
+            algorithm_config=algorithm_config,
+            preprocessors=preprocessors
         )
 
     @staticmethod
@@ -457,11 +486,14 @@ class ExperimentGroupFactory:
     """Factory for creating test experiment groups."""
 
     @staticmethod
+    @patch("brisk.configuration.experiment_group.ExperimentGroup._validate_datasets")
     def simple(
+        mock_validate_datasets,
         name: str = "test_group",
         workflow: str = "test_workflow",
         datasets: Optional[List[str]] = None,
-        algorithms: Optional[List[str]] = None
+        algorithms: Optional[List[str]] = None,
+        algorithm_config: Optional[Dict[str, Any]] = None
     ) -> ExperimentGroup:
         """Create a simple experiment group.
 
@@ -475,11 +507,15 @@ class ExperimentGroupFactory:
             name=name,
             workflow=workflow,
             datasets=datasets or ["test.csv"],
-            algorithms=algorithms or ["linear"]
+            algorithms=algorithms or ["linear"],
+            algorithm_config=algorithm_config or {}
         )
 
     @staticmethod
-    def with_multiple_datasets(n_datasets: int = 3) -> ExperimentGroup:
+    @patch("brisk.configuration.experiment_group.ExperimentGroup._validate_datasets")
+    def with_multiple_datasets(
+        mock_validate_datasets,
+        n_datasets: int = 3) -> ExperimentGroup:
         """Create experiment group with multiple datasets."""
         return ExperimentGroup(
             name="multi_dataset_group",

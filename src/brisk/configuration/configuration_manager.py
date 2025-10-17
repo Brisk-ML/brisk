@@ -114,16 +114,14 @@ class ConfigurationManager:
         self.services.utility.set_plot_settings(plot_settings)
         self.experiment_groups = experiment_groups
         self.categorical_features = categorical_features
-        self.workflow_map = {}
         self.project_root = project.find_project_root()
         self.algorithm_config = self._load_algorithm_config()
         self.base_data_manager = self._load_base_data_manager()
-        self.data_managers = self._create_data_managers()
-        self.experiment_queue = self._create_experiment_queue()
-        self._create_data_splits()
-        self._create_logfile()
-        self.output_structure = self._get_output_structure()
-        self.description_map = self._create_description_map()
+        self.workflow_map = {}
+        self.data_managers = {}
+        self.experiment_queue = collections.deque()
+        self.output_structure = {}
+        self.description_map = {}
 
     def _load_base_data_manager(self) -> data_manager.DataManager:
         """Load default DataManager configuration from project's data.py.
@@ -213,7 +211,7 @@ class ConfigurationManager:
             if name != "self"
         }
 
-    def _create_data_managers(self) -> Dict[str, data_manager.DataManager]:
+    def get_data_managers(self) -> Dict[str, data_manager.DataManager]:
         """Create minimal set of DataManager instances.
 
         Groups ExperimentGroups by their data_config and creates one
@@ -275,9 +273,10 @@ class ConfigurationManager:
                 self.services.reporting.add_data_manager(name, manager)
                 managers[name] = manager
 
+        self.data_managers = managers
         return managers
 
-    def _create_experiment_queue(self) -> collections.deque:
+    def get_experiment_queue(self) -> collections.deque:
         """Create queue of experiments from all ExperimentGroups.
 
         Creates an ExperimentFactory with loaded algorithm configuration,
@@ -315,9 +314,10 @@ class ConfigurationManager:
             experiments = factory.create_experiments(group, n_splits)
             all_experiments.extend(experiments)
 
+        self.experiment_queue = all_experiments
         return all_experiments
 
-    def _create_data_splits(self) -> None:
+    def create_data_splits(self) -> None:
         """Create DataSplitInfo instances for all datasets.
 
         Creates data splits for each dataset in each experiment group using
@@ -355,7 +355,7 @@ class ConfigurationManager:
                     filename=dataset_path.stem
                 )
 
-    def _create_logfile(self) -> None:
+    def create_logfile(self) -> str:
         """Create a markdown string describing the configuration.
 
         Generates comprehensive documentation of the experiment configuration
@@ -373,6 +373,11 @@ class ConfigurationManager:
 
         This documentation is saved as part of the experiment results
         and provides a complete record of the configuration used.
+
+        Returns
+        -------
+        str
+            
         """
         md_content = [
             "## Default Algorithm Configuration"
@@ -438,9 +443,9 @@ class ConfigurationManager:
                     ""
                 ])
 
-        self.logfile = "\n".join(md_content)
+        return "\n".join(md_content)
 
-    def _get_output_structure(self) -> Dict[str, Dict[str, Tuple[str, str]]]:
+    def get_output_structure(self) -> Dict[str, Dict[str, Tuple[str, str]]]:
         """Get the directory structure for experiment outputs.
 
         Creates a nested dictionary structure that maps experiment groups
@@ -483,7 +488,7 @@ class ConfigurationManager:
 
         return output_structure
 
-    def _create_description_map(self) -> Dict[str, str]:
+    def get_description_map(self) -> Dict[str, str]:
         """Create a mapping of group names to descriptions.
 
         Creates a simple mapping of experiment group names to their
@@ -502,8 +507,9 @@ class ConfigurationManager:
         filtered out to avoid cluttering the output with meaningless
         entries.
         """
-        return {
+        self.description_map = {
             group.name: group.description
             for group in self.experiment_groups
             if group.description != ""
         }
+        return self.description_map
