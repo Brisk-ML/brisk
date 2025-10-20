@@ -493,7 +493,9 @@ class ExperimentGroupFactory:
         workflow: str = "test_workflow",
         datasets: Optional[List[str]] = None,
         algorithms: Optional[List[str]] = None,
-        algorithm_config: Optional[Dict[str, Any]] = None
+        algorithm_config: Optional[Dict[str, Any]] = None,
+        description: Optional[str] = "",
+        workflow_args: Optional[Dict[str, Any]] = None
     ) -> ExperimentGroup:
         """Create a simple experiment group.
 
@@ -508,7 +510,9 @@ class ExperimentGroupFactory:
             workflow=workflow,
             datasets=datasets or ["test.csv"],
             algorithms=algorithms or ["linear"],
-            algorithm_config=algorithm_config or {}
+            algorithm_config=algorithm_config or {},
+            description=description,
+            workflow_args=workflow_args
         )
 
     @staticmethod
@@ -525,21 +529,27 @@ class ExperimentGroupFactory:
         )
 
     @staticmethod
-    def with_preprocessing() -> ExperimentGroup:
+    @patch("brisk.configuration.experiment_group.ExperimentGroup._validate_datasets")
+    def with_preprocessing(
+        mock_validate_datasets,
+        data_config=None
+    ) -> ExperimentGroup:
         """Create experiment group with preprocessing configuration."""
+        data_config = {
+            "preprocessors": [
+                ScalingPreprocessor(method="standard"),
+                MissingDataPreprocessor(
+                    strategy="impute", impute_method="mean"
+                )
+            ]
+        } if data_config is None else data_config
+
         return ExperimentGroup(
             name="preprocessed_group",
             workflow="test_workflow",
             datasets=["test.csv"],
             algorithms=["linear"],
-            data_config={
-                "preprocessors": [
-                    ScalingPreprocessor(method="standard"),
-                    MissingDataPreprocessor(
-                        strategy="impute", impute_method="mean"
-                    )
-                ]
-            }
+            data_config=data_config
         )
 
 
