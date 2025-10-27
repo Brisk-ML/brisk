@@ -15,6 +15,8 @@ AlgorithmWrapper
 
 from typing import Any, Dict, Optional, Type
 
+from sklearn import base
+
 from brisk.reporting import formatting
 
 class AlgorithmWrapper:
@@ -84,7 +86,7 @@ class AlgorithmWrapper:
         self,
         name: str,
         display_name: str,
-        algorithm_class: Type,
+        algorithm_class: base.BaseEstimator,
         default_params: Optional[Dict[str, Any]] = None,
         hyperparam_grid: Optional[Dict[str, Any]] = None
     ):

@@ -35,3 +35,16 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 brisk = "brisk.cli.cli:cli"
+
+[tool.pytest.ini_options]
+norecursedirs = ["old_suite"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
