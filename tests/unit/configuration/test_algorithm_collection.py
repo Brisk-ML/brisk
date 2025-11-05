@@ -1,14 +1,11 @@
 """Unit tests for AlgorithmCollection."""
 import pytest
 
-from sklearn import linear_model
-
-from brisk.configuration.algorithm_wrapper import AlgorithmWrapper
 from brisk.configuration.algorithm_collection import AlgorithmCollection
 
 from tests.utils.factories import AlgorithmFactory
 
-class TestAlgorithmCollection():
+class TestAlgorithmCollectionUnit():
     def test_instantiation_no_algorithm(self):
         collection = AlgorithmCollection()
         assert collection == []
