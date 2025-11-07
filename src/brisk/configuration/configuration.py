@@ -30,7 +30,7 @@ from typing import List, Dict, Optional, Any, Tuple
 
 from brisk.configuration import configuration_manager
 from brisk.configuration import experiment_group
-from brisk.services import get_services
+from brisk.services import get_services, bundle, missing
 from brisk.theme import plot_settings as plot_settings_module
 
 class Configuration:
@@ -134,6 +134,7 @@ class Configuration:
         self.plot_settings = plot_settings
         if self.plot_settings is None:
             self.plot_settings = plot_settings_module.PlotSettings()
+        self.services = missing.MissingServices()
 
     def add_experiment_group(
         self,
@@ -272,10 +273,25 @@ class Configuration:
             >>> # manager is ready to execute experiments
         """
         self.export_params()
-        return configuration_manager.ConfigurationManager(
-            self.experiment_groups, self.categorical_features,
-            self.plot_settings
+        manager = configuration_manager.ConfigurationManager(
+            self.experiment_groups, self.categorical_features
         )
+        manager.set_services(self.plot_settings)
+        manager.load_algorithm_config()
+        manager.load_base_data_manager()
+        manager.create_data_managers()
+        manager.create_experiment_queue()
+        manager.create_data_splits()
+        manager.create_logfile()
+        manager.get_output_structure()
+        manager.create_description_map()
+        return manager
+
+    def set_services(self, services: Optional[bundle.ServiceBundle] = None):
+        if services is None:
+            self.services = get_services()
+        else:
+            self.services = services
 
     def _check_name_exists(self, name: str) -> None:
         """Check if an experiment group name is already in use.
@@ -403,8 +419,6 @@ class Configuration:
             >>> config.add_experiment_group(name="test", datasets=["data.csv"])
             >>> manager = config.build()  # export_params() called automatically
         """
-        services = get_services()
-
         # flatten categorical_features to a list of items
         categorical_items = []
         for key, features in (self.categorical_features or {}).items():
@@ -449,6 +463,6 @@ class Configuration:
                 "workflow_args": dict(group.workflow_args or {}),
             })
 
-        services.rerun.add_configuration(configuration_json)
-        services.rerun.add_experiment_groups(groups_json)
-        services.rerun.collect_dataset_metadata(groups_json)
+        self.services.rerun.add_configuration(configuration_json)
+        self.services.rerun.add_experiment_groups(groups_json)
+        self.services.rerun.collect_dataset_metadata(groups_json)
