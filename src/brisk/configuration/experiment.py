@@ -74,8 +74,8 @@ class Experiment:
     dataset_path: pathlib.Path
     workflow_args: Dict[str, Any]
     split_index: int
-    table_name: Optional[str | None]
-    categorical_features: Optional[List[str] | None]
+    table_name: Optional[str | None]=None
+    categorical_features: Optional[List[str] | None]=None
 
     @property
     def name(self) -> str:
