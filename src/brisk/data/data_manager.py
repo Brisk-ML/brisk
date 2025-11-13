@@ -17,7 +17,7 @@ import pandas as pd
 from sklearn import model_selection
 
 from brisk.data import data_split_info, preprocessing, data_splits
-from brisk.services import get_services
+from brisk.services import get_services, missing, bundle
 
 class DataManager:
     """A class that handles data splitting logic for creating train-test splits.
@@ -181,7 +181,7 @@ class DataManager:
         3. Initializes the preprocessing pipeline
         4. Prepares the split cache
         """
-        self.services = get_services()
+        self.services = missing.MissingServices()
         self.test_size = test_size
         self.split_method = split_method
         self.group_column = group_column
@@ -194,6 +194,12 @@ class DataManager:
         self._validate_config()
         self.splitter = self._set_splitter()
         self._splits = {}
+
+    def set_services(self, services: Optional[bundle.ServiceBundle] = None):
+        if services is None:
+            self.services = get_services()
+        else:
+            self.services = services
 
     def _validate_config(self) -> None:
         """Validate the provided configuration for splitting.

@@ -241,6 +241,11 @@ class ConfigurationManager:
         This optimization is particularly important when running many
         experiments with similar data processing requirements.
         """
+        if self.base_data_manager is None:
+            raise ValueError(
+                "self.base_data_manager is not set. "
+                "Call load_base_data_manager() first."
+            )
         config_groups = collections.defaultdict(list)
         for group in self.experiment_groups:
             # Create a hashable key for grouping similar configurations
