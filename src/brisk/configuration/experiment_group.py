@@ -36,10 +36,10 @@ class ExperimentGroup:
         Unique identifier for the experiment group
     datasets : list
         List of dataset filenames relative to project's datasets directory
+    algorithms : list
+        List of algorithms to use
     data_config : dict, optional
         Arguments for DataManager
-    algorithms : list, optional
-        List of algorithms to use
     algorithm_config : dict, optional
         Arguments to apply to AlgorithmWrappers
     description : str, optional
@@ -52,8 +52,8 @@ class ExperimentGroup:
     name: str
     datasets: List[str | Tuple[str, str]]
     workflow: str
+    algorithms: List[str]
     data_config: Optional[Dict[str, Any]] = None
-    algorithms: Optional[List[str]] = None
     algorithm_config: Optional[Dict[str, Dict[str, Any]]] = None
     description: Optional[str] = ""
     workflow_args: Optional[Dict[str, Any]] = None

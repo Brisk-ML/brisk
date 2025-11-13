@@ -6,6 +6,7 @@ from sklearn import linear_model
 
 from brisk.configuration.algorithm_wrapper import AlgorithmWrapper
 from brisk.configuration.experiment_group import ExperimentGroup
+from brisk.configuration.algorithm_collection import AlgorithmCollection
 
 class AlgorithmFactory:
     """Factory to create AlgorithmWrapper instances for use in tests."""
@@ -36,11 +37,22 @@ class AlgorithmFactory:
             hyperparam_grid=hyperparam_grid
         )
 
+    @classmethod
+    def collection(cls):
+        return AlgorithmCollection(
+            cls.simple(),
+            cls.full(
+                "linear", "Linear Regression", linear_model.LinearRegression,
+                {}, {}
+            ),
+            cls.full("lasso", "LASSO Regression", linear_model.Lasso)
+        )
 
 class ExperimentGroupFactory:
     DEFAULT_NAME = "test_group"
     DEFAULT_DATASETS = ["data.csv"]
     DEFAULT_WORKFLOW = "test_workflow"
+    DEFAULT_ALGORITHMS = ["ridge"]
 
     @classmethod
     def _create_dataset_files(cls, tmp_path: Path, datasets: list[str]):
@@ -59,6 +71,7 @@ class ExperimentGroupFactory:
         name: str | None = None,
         datasets: list[str] | None = None,
         workflow: str | None = None,
+        algorithms: list[str] | None = None,
         create_files: bool = True
     ):
         if create_files:
@@ -68,7 +81,8 @@ class ExperimentGroupFactory:
         return ExperimentGroup(
             name=name or cls.DEFAULT_NAME,
             datasets=datasets or cls.DEFAULT_DATASETS,
-            workflow=workflow or cls.DEFAULT_WORKFLOW
+            workflow=workflow or cls.DEFAULT_WORKFLOW,
+            algorithms=algorithms or cls.DEFAULT_ALGORITHMS
         )
     
     @classmethod
@@ -79,6 +93,7 @@ class ExperimentGroupFactory:
         name: str | None = None,
         datasets: list[str] | None = None,
         workflow: str | None = None,
+        algorithms: list[str] | None = None,
         create_files: bool = True
     ):
         if create_files:
@@ -89,7 +104,32 @@ class ExperimentGroupFactory:
             name=name or cls.DEFAULT_NAME,
             data_config=data_config,
             datasets=datasets or cls.DEFAULT_DATASETS,
-            workflow=workflow or cls.DEFAULT_WORKFLOW
+            workflow=workflow or cls.DEFAULT_WORKFLOW,
+            algorithms=algorithms or cls.DEFAULT_ALGORITHMS
+        )
+
+
+    @classmethod
+    def with_hyperparam_grid(
+        cls,
+        tmp_path: Path,
+        hyperparam_grid: dict,
+        name: str | None = None,
+        datasets: list[str] | None = None,
+        workflow: str | None = None,
+        algorithms: list[str] | None = None,
+        create_files: bool = True
+    ):
+        if create_files:
+            cls._create_dataset_files(
+                tmp_path, datasets or cls.DEFAULT_DATASETS
+            )
+        return ExperimentGroup(
+            name=name or cls.DEFAULT_NAME,
+            algorithm_config=hyperparam_grid,
+            datasets=datasets or cls.DEFAULT_DATASETS,
+            workflow=workflow or cls.DEFAULT_WORKFLOW,
+            algorithms=algorithms or cls.DEFAULT_ALGORITHMS
         )
 
     @classmethod
