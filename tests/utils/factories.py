@@ -55,7 +55,7 @@ class ExperimentGroupFactory:
     DEFAULT_ALGORITHMS = ["ridge"]
 
     @classmethod
-    def _create_dataset_files(cls, tmp_path: Path, datasets: list[str]):
+    def create_dataset_files(cls, tmp_path: Path, datasets: list[str]):
         datasets_dir = tmp_path / "datasets"
         datasets_dir.mkdir(parents=True, exist_ok=True)
         for dataset in datasets:
@@ -75,7 +75,7 @@ class ExperimentGroupFactory:
         create_files: bool = True
     ):
         if create_files:
-            cls._create_dataset_files(
+            cls.create_dataset_files(
                 tmp_path, datasets or cls.DEFAULT_DATASETS
             )
         return ExperimentGroup(
@@ -97,7 +97,7 @@ class ExperimentGroupFactory:
         create_files: bool = True
     ):
         if create_files:
-            cls._create_dataset_files(
+            cls.create_dataset_files(
                 tmp_path, datasets or cls.DEFAULT_DATASETS
             )
         return ExperimentGroup(
@@ -107,7 +107,6 @@ class ExperimentGroupFactory:
             workflow=workflow or cls.DEFAULT_WORKFLOW,
             algorithms=algorithms or cls.DEFAULT_ALGORITHMS
         )
-
 
     @classmethod
     def with_hyperparam_grid(
@@ -121,7 +120,7 @@ class ExperimentGroupFactory:
         create_files: bool = True
     ):
         if create_files:
-            cls._create_dataset_files(
+            cls.create_dataset_files(
                 tmp_path, datasets or cls.DEFAULT_DATASETS
             )
         return ExperimentGroup(
@@ -143,7 +142,7 @@ class ExperimentGroupFactory:
         create_files: bool = True
     ):
         if create_files:
-            cls._create_dataset_files(
+            cls.create_dataset_files(
                 tmp_path, datasets or cls.DEFAULT_DATASETS
             )
         return ExperimentGroup(
