@@ -142,6 +142,7 @@ class ExperimentGroupFactory:
         name: str | None = None,
         datasets: list[str] | None = None,
         workflow: str | None = None,
+        algorithms: list[str] | None = None,
         create_files: bool = True
     ):
         if create_files:
@@ -152,7 +153,8 @@ class ExperimentGroupFactory:
             description=description,
             name=name or cls.DEFAULT_NAME,
             datasets=datasets or cls.DEFAULT_DATASETS,
-            workflow=workflow or cls.DEFAULT_WORKFLOW
+            workflow=workflow or cls.DEFAULT_WORKFLOW,
+            algorithms=algorithms or cls.DEFAULT_ALGORITHMS
         )
 
 

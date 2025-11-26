@@ -173,7 +173,10 @@ class ExperimentGroup:
             if invalid_algorithms:
                 raise ValueError(
                     f"Algorithm config contains algorithms not in the list of "
-                    f"algorithms: {invalid_algorithms}"
+                    f"algorithms: {invalid_algorithms}\n"
+                    f"Flat algorithms: {flat_algorithms}\n"
+                    f"self.algortihm_config: {self.algorithm_config}\n"
+                    f"self.algorithms: {self.algorithms}"
                 )
 
     def _validate_data_config(self):

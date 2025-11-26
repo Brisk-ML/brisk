@@ -233,14 +233,14 @@ class Configuration:
         formated_datasets = self._convert_datasets_to_tuple(datasets)
         self.experiment_groups.append(
             experiment_group.ExperimentGroup(
-                name,
-                formated_datasets,
-                workflow,
-                data_config,
-                algorithms,
-                algorithm_config,
-                description,
-                workflow_args
+                name=name,
+                datasets=formated_datasets,
+                workflow=workflow,
+                algorithms=algorithms,
+                data_config=data_config,
+                algorithm_config=algorithm_config,
+                description=description,
+                workflow_args=workflow_args
             )
         )
 
