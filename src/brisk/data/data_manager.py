@@ -16,8 +16,9 @@ from typing import Optional, List, Any, Tuple
 import pandas as pd
 from sklearn import model_selection
 
-from brisk.data import data_split_info, preprocessing, data_splits
+from brisk.data import data_split_info, preprocessing, data_splits, splitkey
 from brisk.services import get_services, missing, bundle
+
 
 class DataManager:
     """A class that handles data splitting logic for creating train-test splits.
@@ -804,7 +805,7 @@ class DataManager:
             ...     filename="dataset1"
             ... )
         """
-        split_key = (group_name, filename, table_name)
+        split_key = splitkey.SplitKey(group_name, filename, table_name)
 
         if split_key in self._splits:
             return self._splits[split_key]
@@ -863,6 +864,8 @@ class DataManager:
                 categorical_features=categorical_features,
                 continuous_features=continuous_features
             )
+            split.set_services()
+            split.evaluate_data_split()
             split_container.add(split)
 
         self._splits[split_key] = split_container
