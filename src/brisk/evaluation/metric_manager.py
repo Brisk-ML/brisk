@@ -314,10 +314,9 @@ class MetricManager:
 
         Notes
         -----
-        This method intelligently detects whether metrics are from built-in
-        collections or are custom metrics. For built-in collections, it
-        exports collection references. For custom metrics, it exports the
-        full configuration including function definitions.
+        For built-in collections, exports collection references. For custom 
+        metrics, it exports the full configuration including function 
+        definitions.
 
         The exported configuration can be used to recreate the exact same
         MetricManager instance, enabling reproducible experiments.
