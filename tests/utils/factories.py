@@ -4,11 +4,13 @@ from pathlib import Path
 
 import pandas as pd
 import numpy as np
-from sklearn import linear_model
+from sklearn import linear_model, metrics
 
 from brisk.configuration.algorithm_wrapper import AlgorithmWrapper
 from brisk.configuration.experiment_group import ExperimentGroup
 from brisk.configuration.algorithm_collection import AlgorithmCollection
+from brisk.evaluation.metric_manager import MetricManager
+from brisk.evaluation.metric_wrapper import MetricWrapper
 
 class AlgorithmFactory:
     """Factory to create AlgorithmWrapper instances for use in tests."""
@@ -345,3 +347,41 @@ class DataFrameFactory:
                 f"Length of feature_types ({len(feature_types)} must match)"
                 f"n_features ({n_features})"
             )
+
+
+class MetricManagerFactory:
+    @classmethod
+    def regression(cls):
+        return MetricManager(
+            MetricWrapper(
+                name="mean_absolute_error",
+                func=metrics._regression.mean_absolute_error,
+                display_name="Mean Absolute Error",
+                abbr="MAE",
+                greater_is_better=False
+            ),
+            MetricWrapper(
+                name="mean_squared_error",
+                func=metrics._regression.mean_squared_error,
+                display_name="Mean Squared Error",
+                abbr="MSE",
+                greater_is_better=False
+            ),
+        )
+
+    @classmethod
+    def classification(cls):
+        return MetricManager(
+            MetricWrapper(
+                name="accuracy",
+                func=metrics.accuracy_score,
+                display_name="Accuracy",
+                greater_is_better=True
+            ),
+            MetricWrapper(
+                name="precision",
+                func=metrics.precision_score,
+                display_name="Precision",
+                greater_is_better=True
+            ),
+        )

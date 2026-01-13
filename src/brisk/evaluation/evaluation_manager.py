@@ -6,7 +6,7 @@ visualization. Services implement functionality shared by all evaluators,
 while evaluators implement specific evaluation methods.
 """
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, Optional, Callable
 import copy
 import os
 
@@ -18,7 +18,12 @@ import plotnine as pn
 from brisk.evaluation.evaluators import registry
 from brisk.evaluation import metric_manager
 from brisk.evaluation.evaluators import builtin
-from brisk.services import get_services, update_experiment_config
+from brisk.services import (
+    get_services,
+    update_experiment_config,
+    missing,
+    bundle
+)
 from brisk.evaluation.evaluators import base as base_eval
 from brisk.configuration import project
 
@@ -32,14 +37,14 @@ class EvaluationManager:
 
     Parameters
     ----------
-    metric_config : MetricManager
+    metric_manager : MetricManager
         The metric configuration manager for handling evaluation metrics
 
     Attributes
     ----------
     services : ServiceBundle
         The global services bundle providing shared functionality
-    metric_config : MetricManager
+    metric_manager : MetricManager
         The metric configuration manager
     output_dir : Path or None
         The output directory for the evaluation results
@@ -66,46 +71,61 @@ class EvaluationManager:
 
     def __init__(
         self,
-        metric_config: metric_manager.MetricManager,
+        metric_manager: metric_manager.MetricManager,
     ):
         """Initialize EvaluationManager with metric configuration.
 
         Parameters
         ----------
-        metric_config : MetricManager
+        metric_manager : MetricManager
             The metric configuration manager for handling evaluation metrics
         """
-        self.services = get_services()
-        self.metric_config = copy.deepcopy(metric_config)
+        self.services = missing.MissingServices()
+        self.metric_manager = copy.deepcopy(metric_manager)
         self.output_dir = None
+        self.plot_settings = None
         self.registry = registry.EvaluatorRegistry()
-        self._initialize_evaluators()
 
-    def set_experiment_values(
+    def set_services(
         self,
-        output_dir: str,
-        split_metadata: Dict[str, Any],
-        group_index_train: Dict[str, np.array],
-        group_index_test: Dict[str, np.array],
+        services: Optional[bundle.ServiceBundle] = None
     ) -> None:
-        """Update services and metric_config with the values for the current
-        experiment.
+        if services is None:
+            self.services = get_services()
+        else:
+            self.services = services
+        self.plot_settings = self.services.utility.get_plot_settings()
 
-        Sets up the evaluation environment for a specific experiment by
-        configuring the output directory, updating experiment configuration,
-        and setting split metadata for metrics.
-
+    def set_output_dir(self, output_dir: str) -> None:
+        """
         Parameters
         ----------
         output_dir : str
             The output directory for the evaluation results
-        split_metadata : Dict[str, Any]
-            The split metadata for the current experiment containing
-            information about data splits
+
+        Returns
+        -------
+        None
+        """
+        self.output_dir = Path(output_dir)
+
+    def set_experiment_config(
+        self,
+        group_index_train: Dict[str, np.array],
+        group_index_test: Dict[str, np.array],
+        update_method: Optional[Callable] = None
+    ) -> None:
+        """Update services and metric_manager with the values for the current
+        experiment.
+
+        Parameters
+        ----------
         group_index_train : Dict[str, np.array]
             The group index for the training split
         group_index_test : Dict[str, np.array]
             The group index for the testing split
+        update_method: Optional[Callable]
+            Inject a different update function; used for testing 
 
         Returns
         -------
@@ -117,11 +137,17 @@ class EvaluationManager:
         that all services and metrics are properly configured for the
         current experiment context.
         """
-        self.output_dir = Path(output_dir)
-        update_experiment_config(
-            self.output_dir, group_index_train, group_index_test
-        )
-        self.update_metrics(split_metadata)
+        if update_method:
+            update_method(
+                self.output_dir, group_index_train, group_index_test
+            )
+        else:
+            update_experiment_config(
+                self.output_dir, group_index_train, group_index_test
+            )
+
+    def set_evaluator_registry(self):
+        self.services.reporting.set_evaluator_registry(self.registry)
 
     def update_metrics(self, split_metadata: Dict[str, Any]) -> None:
         """Update the metric configuration with the split metadata.
@@ -144,7 +170,7 @@ class EvaluationManager:
         This method updates the internal metric configuration to reflect
         the current experiment's data split characteristics.
         """
-        self.metric_config.set_split_metadata(split_metadata)
+        self.metric_manager.set_split_metadata(split_metadata)
 
     def _register_custom_evaluators(self, theme: pn.theme) -> None:
         """Register any Evaluators defined in evaluators.py.
@@ -229,8 +255,8 @@ class EvaluationManager:
                     "with Brisk."
                 )
 
-    def _initialize_evaluators(self) -> None:
-        """Initialize all built-in evaluators with shared services.
+    def initialize_evaluators(self) -> None:
+        """Initialize all evaluators with shared services.
 
         This method registers all built-in evaluators with the evaluator 
         registry and sets the services for each evaluator. It also attempts
@@ -248,14 +274,12 @@ class EvaluationManager:
         3. Setting services for all evaluators
         4. Configuring the reporting service with the evaluator registry
         """
-        plot_settings = self.services.utility.get_plot_settings()
-        builtin.register_builtin_evaluators(self.registry, plot_settings)
-        self._register_custom_evaluators(plot_settings)
+        builtin.register_builtin_evaluators(self.registry, self.plot_settings)
+        self._register_custom_evaluators(self.plot_settings)
 
+    def set_evaluator_services(self) -> None:
         for evaluator in self.registry.evaluators.values():
             evaluator.set_services(self.services)
-
-        self.services.reporting.set_evaluator_registry(self.registry)
 
     def get_evaluator(self, name: str) -> base_eval.BaseEvaluator:
         """Return an evaluator instance.
@@ -279,7 +303,7 @@ class EvaluationManager:
         configuration, making it ready for use in evaluation operations.
         """
         evaluator = self.registry.get(name)
-        evaluator.set_metric_config(self.metric_config)
+        evaluator.set_metric_config(self.metric_manager)
         return evaluator
 
     def save_model(self, model: base.BaseEstimator, filename: str) -> None:
