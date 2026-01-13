@@ -122,6 +122,8 @@ class MetricWrapper:
         self.greater_is_better = greater_is_better
         self.params = default_params
         self.params["split_metadata"] = {}
+        self._func_with_params = Callable
+        self.scorer = None
         self._apply_params()
 
     def _apply_params(self) -> None:
@@ -142,6 +144,7 @@ class MetricWrapper:
         scorer with the same parameters.
         """
         self._func_with_params = functools.partial(self.func, **self.params)
+        self._func_with_params.__name__ = self.name
         self.scorer = metrics.make_scorer(
             self.func,
             greater_is_better=self.greater_is_better,
