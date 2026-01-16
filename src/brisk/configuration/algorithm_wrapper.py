@@ -398,7 +398,7 @@ class AlgorithmWrapper:
                         "_brisk_object_type": "sklearn_estimator",
                         "module": value.__class__.__module__,
                         "class_name": value.__class__.__name__,
-                        "params": value.get_params()
+                        "params": value.get_params(self)
                     }
                 else:
                     serialized[key] = {
@@ -457,7 +457,7 @@ class AlgorithmWrapper:
                             "_brisk_object_type": "sklearn_estimator",
                             "module": estimator.__class__.__module__,
                             "class_name": estimator.__class__.__name__,
-                            "params": estimator.get_params()
+                            "params": estimator.get_params(self)
                         }
                     ])
                 else:
