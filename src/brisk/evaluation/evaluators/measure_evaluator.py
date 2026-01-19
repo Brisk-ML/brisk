@@ -188,7 +188,7 @@ class MeasureEvaluator(base_eval.BaseEvaluator):
         return model.predict(X)
 
     @abc.abstractmethod
-    def _calculate_measures(
+    def calculate_measures(
         self,
         predictions: pd.Series,
         y_true: pd.Series,
@@ -258,7 +258,7 @@ class MeasureEvaluator(base_eval.BaseEvaluator):
         rows = [row for key in columns for row in results[key]]
         return columns, rows
 
-    def _log_results(self, results: Dict[str, float], filename: str) -> None:
+    def log_results(self, results: Dict[str, float], filename: str) -> None:
         """Default logging - can be overridden.
 
         Logs the evaluation results in a standardized format.

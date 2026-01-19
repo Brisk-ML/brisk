@@ -93,13 +93,13 @@ class PlotConfusionHeatmap(plot_evaluator.PlotEvaluator):
         The plot is saved with metadata for later analysis and reporting.
         """
         prediction = self._generate_prediction(model, X)
-        plot_data = self._generate_plot_data(prediction, y)
+        plot_data = self.generate_plot_data(prediction, y)
         plot = self._create_plot(plot_data, model.display_name)
         metadata = self._generate_metadata(model, X.attrs["is_test"])
         self._save_plot(filename, metadata, plot=plot)
-        self._log_results("Confusion Matrix Heatmap", filename)
+        self.log_results("Confusion Matrix Heatmap", filename)
 
-    def _generate_plot_data(
+    def generate_plot_data(
         self,
         prediction: pd.Series,
         y: np.ndarray,
@@ -294,16 +294,16 @@ class PlotRocCurve(plot_evaluator.PlotEvaluator):
         The plot includes both the ROC curve and a reference line for
         random guessing, along with the AUC score annotation.
         """
-        plot_data, auc_data, auc = self._generate_plot_data(
+        plot_data, auc_data, auc = self.generate_plot_data(
             model, X, y, pos_label
         )
         wrapper = self.utility.get_algo_wrapper(model.wrapper_name)
         plot = self._create_plot(plot_data, auc_data, auc, wrapper)
         metadata = self._generate_metadata(model, X.attrs["is_test"])
         self._save_plot(filename, metadata, plot=plot)
-        self._log_results("ROC Curve", auc, filename)
+        self.log_results("ROC Curve", auc, filename)
 
-    def _generate_plot_data(
+    def generate_plot_data(
         self,
         model: base.BaseEstimator,
         X: np.ndarray, # pylint: disable=C0103
@@ -452,7 +452,7 @@ class PlotRocCurve(plot_evaluator.PlotEvaluator):
         )
         return plot
 
-    def _log_results(self, plot_name: str, auc: float, filename: str) -> None:
+    def log_results(self, plot_name: str, auc: float, filename: str) -> None:
         """Log the results of the ROC curve to console.
 
         Displays the ROC curve plot name, AUC score, and file path
@@ -579,7 +579,7 @@ class PlotPrecisionRecallCurve(plot_evaluator.PlotEvaluator):
         self._save_plot(filename, metadata, plot=plot)
         self._log_results("Precision-Recall Curve", ap_score, filename)
 
-    def _generate_plot_data(
+    def generate_plot_data(
         self,
         model: base.BaseEstimator,
         X: np.ndarray, # pylint: disable=C0103
@@ -708,7 +708,7 @@ class PlotPrecisionRecallCurve(plot_evaluator.PlotEvaluator):
         )
         return plot
 
-    def _log_results(
+    def log_results(
         self,
         plot_name: str,
         ap_score: float,

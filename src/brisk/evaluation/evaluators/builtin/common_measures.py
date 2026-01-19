@@ -58,7 +58,7 @@ class EvaluateModel(measure_evaluator.MeasureEvaluator):
         >>> evaluator.evaluate(model, X, y, ["accuracy", "f1_score"], "results")
     """
 
-    def _calculate_measures(
+    def calculate_measures(
         self,
         predictions: Dict[str, Any],
         y_true: pd.Series,
@@ -106,7 +106,7 @@ class EvaluateModel(measure_evaluator.MeasureEvaluator):
                 )
         return results
 
-    def _log_results(self, results: Dict[str, float], filename: str) -> None:
+    def log_results(self, results: Dict[str, float], filename: str) -> None:
         """Override default logging for model evaluation results.
 
         Provides custom logging format for model evaluation results,
@@ -183,6 +183,7 @@ class EvaluateModel(measure_evaluator.MeasureEvaluator):
                 str(results[metric])
             ])
         return columns, rows
+
 
 class EvaluateModelCV(measure_evaluator.MeasureEvaluator):
     """Evaluate a model using cross-validation and save the scores.
@@ -273,10 +274,10 @@ class EvaluateModelCV(measure_evaluator.MeasureEvaluator):
         Results include mean scores, standard deviations, and all
         individual fold scores for comprehensive analysis.
         """
-        results = self._calculate_measures(model, X, y, metrics, cv)
+        results = self.calculate_measures(model, X, y, metrics, cv)
         metadata = self._generate_metadata(model, X.attrs["is_test"])
         self._save_json(results, filename, metadata)
-        self._log_results(results, filename)
+        self.log_results(results, filename)
 
     def report(
         self,
@@ -318,7 +319,7 @@ class EvaluateModelCV(measure_evaluator.MeasureEvaluator):
             ])
         return columns, rows
 
-    def _calculate_measures(
+    def calculate_measures(
         self,
         model: base.BaseEstimator,
         X: pd.DataFrame, # pylint: disable=C0103
@@ -383,7 +384,7 @@ class EvaluateModelCV(measure_evaluator.MeasureEvaluator):
                 )
         return results
 
-    def _log_results(self, results: Dict[str, float], filename: str) -> None:
+    def log_results(self, results: Dict[str, float], filename: str) -> None:
         """Override default logging for cross-validation results.
 
         Provides custom logging format for cross-validation results,
@@ -509,14 +510,14 @@ class CompareModels(measure_evaluator.MeasureEvaluator):
 
         Results are saved with metadata for later analysis and reporting.
         """
-        results = self._calculate_measures(
+        results = self.calculate_measures(
             *models, X=X, y=y, metrics=metrics, calculate_diff=calculate_diff
         )
         metadata = self._generate_metadata(list(models), X.attrs["is_test"])
         self._save_json(results, filename, metadata)
-        self._log_results(results, filename)
+        self.log_results(results, filename)
 
-    def _calculate_measures(
+    def calculate_measures(
         self,
         *models: base.BaseEstimator,
         X: pd.DataFrame,
@@ -608,7 +609,7 @@ class CompareModels(measure_evaluator.MeasureEvaluator):
                     ] = diff
         return comparison_results
 
-    def _log_results(self, results: Dict[str, float], filename: str) -> None:
+    def log_results(self, results: Dict[str, float], filename: str) -> None:
         """Override default logging for model comparison results.
 
         Provides custom logging format for model comparison results,

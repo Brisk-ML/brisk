@@ -97,12 +97,12 @@ class ConfusionMatrix(measure_evaluator.MeasureEvaluator):
         and reporting.
         """
         prediction = self._generate_prediction(model, X)
-        results = self._calculate_measures(prediction, y)
+        results = self.calculate_measures(prediction, y)
         metadata = self._generate_metadata(model, X.attrs["is_test"])
         self._save_json(results, filename, metadata)
-        self._log_results(results)
+        self.log_results(results)
 
-    def _calculate_measures(
+    def calculate_measures(
         self,
         prediction: pd.Series,
         y: np.ndarray,
@@ -145,7 +145,7 @@ class ConfusionMatrix(measure_evaluator.MeasureEvaluator):
             }
         return data
 
-    def _log_results(self, data: Dict[str, Any]) -> None:
+    def log_results(self, data: Dict[str, Any]) -> None:
         """Log the results of the confusion matrix to console.
 
         Displays the confusion matrix in a formatted table format

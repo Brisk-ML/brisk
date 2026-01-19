@@ -11,7 +11,6 @@ from typing import Dict, Any
 import pandas as pd
 import matplotlib
 
-# from brisk.theme import theme
 from brisk.evaluation.evaluators import base
 
 class DatasetPlotEvaluator(base.BaseEvaluator):
@@ -158,14 +157,14 @@ class DatasetPlotEvaluator(base.BaseEvaluator):
         creation to the abstract methods, which must be implemented
         by subclasses.
         """
-        plot_data = self._generate_plot_data(train_data, test_data)
+        plot_data = self.generate_plot_data(train_data, test_data)
         plot = self._create_plot(plot_data)
         metadata = self._generate_metadata(dataset_name, group_name)
         self._save_plot(filename, metadata, plot=plot)
-        self._log_results(self.method_name, filename)
+        self.log_results(self.method_name, filename)
 
     @abc.abstractmethod
-    def _generate_plot_data(
+    def generate_plot_data(
         self,
         train_data: pd.DataFrame | pd.Series,
         test_data: pd.DataFrame | pd.Series,
@@ -301,7 +300,7 @@ class DatasetPlotEvaluator(base.BaseEvaluator):
             self.method_name, dataset_name, group_name
         )
 
-    def _log_results(self, plot_name: str, filename: str) -> None:
+    def log_results(self, plot_name: str, filename: str) -> None:
         """Default logging - can be overridden.
 
         Logs the plot creation results in a standardized format.

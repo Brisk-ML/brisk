@@ -30,7 +30,7 @@ class ContinuousStatistics(dataset_measure_evaluator.DatasetMeasureEvaluator):
         super().__init__(method_name, description)
         self.name = "continuous_statistics"
 
-    def _calculate_measures(
+    def calculate_measures(
         self,
         train_data: pd.DataFrame | pd.Series,
         test_data: pd.DataFrame | pd.Series,
@@ -126,7 +126,7 @@ class CategoricalStatistics(dataset_measure_evaluator.DatasetMeasureEvaluator):
         super().__init__(method_name, description)
         self.name = "categorical_statistics"
 
-    def _calculate_measures(
+    def calculate_measures(
         self,
         train_data: pd.DataFrame | pd.Series,
         test_data: pd.DataFrame | pd.Series,

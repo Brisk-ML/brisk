@@ -71,14 +71,14 @@ class PlotPredVsObs(plot_evaluator.PlotEvaluator):
             The plot is saved to the specified filename
         """
         prediction = self._generate_prediction(model, X)
-        plot_data, max_range = self._generate_plot_data(prediction, y)
+        plot_data, max_range = self.generate_plot_data(prediction, y)
         wrapper = self.utility.get_algo_wrapper(model.wrapper_name)
         plot = self._create_plot(plot_data, wrapper, max_range)
         metadata = self._generate_metadata(model, X.attrs["is_test"])
         self._save_plot(filename, metadata, plot=plot)
-        self._log_results("Predicted vs. Observed", filename)
+        self.log_results("Predicted vs. Observed", filename)
 
-    def _generate_plot_data(
+    def generate_plot_data(
         self,
         prediction: pd.Series,
         y_true: pd.Series,
@@ -211,14 +211,14 @@ class PlotResiduals(plot_evaluator.PlotEvaluator):
             The plot is saved to the specified filename
         """
         prediction = self._generate_prediction(model, X)
-        plot_data = self._generate_plot_data(prediction, y)
+        plot_data = self.generate_plot_data(prediction, y)
         wrapper = self.utility.get_algo_wrapper(model.wrapper_name)
         plot = self._create_plot(plot_data, wrapper, add_fit_line)
         metadata = self._generate_metadata(model, X.attrs["is_test"])
         self._save_plot(filename, metadata, plot=plot)
-        self._log_results("Residuals", filename)
+        self.log_results("Residuals", filename)
 
-    def _generate_plot_data(
+    def generate_plot_data(
         self,
         predictions: pd.Series,
         y: pd.Series,
