@@ -112,7 +112,7 @@ class HyperparameterTuning(measure_evaluator.MeasureEvaluator):
         algo_wrapper = self.utility.get_algo_wrapper(model.wrapper_name)
         param_grid = algo_wrapper.get_hyperparam_grid()
         self.reporting.set_tuning_measure(scorer)
-        search_result = self._calculate_measures(
+        search_result = self.calculate_measures(
             model, method, X_train, y_train, scorer, kf, num_rep, n_jobs,
             param_grid
         )
@@ -120,7 +120,7 @@ class HyperparameterTuning(measure_evaluator.MeasureEvaluator):
             search_result.best_params_
         )
         tuned_model.fit(X_train, y_train)
-        self._log_results(model)
+        self.log_results(model)
 
         self.reporting.cache_tuned_params(search_result.best_params_)
 
@@ -136,7 +136,7 @@ class HyperparameterTuning(measure_evaluator.MeasureEvaluator):
 
         return tuned_model
 
-    def _calculate_measures(
+    def calculate_measures(
         self,
         model: base.BaseEstimator,
         method: str,
@@ -209,7 +209,7 @@ class HyperparameterTuning(measure_evaluator.MeasureEvaluator):
         search_result = search.fit(X_train, y_train, groups=indices)
         return search_result
 
-    def _log_results(self, model: base.BaseEstimator) -> None:
+    def log_results(self, model: base.BaseEstimator) -> None:
         """Log the results of the hyperparameter tuning.
 
         Logs completion message for hyperparameter optimization process.
