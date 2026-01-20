@@ -727,8 +727,7 @@ class IOService(base.BaseService):
             )
 
         except (ImportError, AttributeError) as e:
-            print(f"Error validating workflow: {e}")
-            return rerun.handle_load_workflow(None, workflow_name)
+            raise ImportError(f"Failed to load workflow {workflow_name}") from e
 
     def _validate_single_variable(
         self,

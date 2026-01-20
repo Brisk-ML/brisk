@@ -11,6 +11,7 @@ from brisk.configuration.experiment_group import ExperimentGroup
 from brisk.configuration.algorithm_collection import AlgorithmCollection
 from brisk.evaluation.metric_manager import MetricManager
 from brisk.evaluation.metric_wrapper import MetricWrapper
+from brisk.data import data_split_info, data_splits, splitkey
 
 class AlgorithmFactory:
     """Factory to create AlgorithmWrapper instances for use in tests."""
@@ -299,8 +300,8 @@ class DataFrameFactory:
         result = {
             "X_train": df.loc[train_indices, feature_cols].reset_index(drop=True),
             "X_test": df.loc[test_indices, feature_cols].reset_index(drop=True),
-            "y_train": df.loc[train_indices, [target_col]].reset_index(drop=True),
-            "y_test": df.loc[test_indices, [target_col]].reset_index(drop=True),
+            "y_train": df.loc[train_indices, target_col].reset_index(drop=True),
+            "y_test": df.loc[test_indices, target_col].reset_index(drop=True),
         }
 
         if add_group:
@@ -385,3 +386,67 @@ class MetricManagerFactory:
                 greater_is_better=True
             ),
         )
+
+
+class DataSplitInfoFactory:
+    """Factory for creating DataSplitInfo instances for testing."""
+    @classmethod
+    def simple(
+        cls,
+        split_index: int = 0,
+        group_name: str = "test_group",
+        dataset_name: str = "test_data.csv",
+        table_name: str = None,
+        problem_type: str = "regression",
+        n_samples: int = 100,
+        n_features: int = 3
+    ):
+        """Create a simple DataSplitInfo instance."""
+        data = DataFrameFactory.train_test_split(
+            n_samples=n_samples,
+            n_features=n_features,
+            problem_type=problem_type
+        )
+        
+        split_key_obj = splitkey.SplitKey(
+            group_name=group_name,
+            dataset_name=dataset_name,
+            table_name=table_name
+        )
+        
+        return data_split_info.DataSplitInfo(
+            X_train=data["X_train"],
+            X_test=data["X_test"],
+            y_train=data["y_train"],
+            y_test=data["y_test"],
+            group_index_train=data["group_index_train"],
+            group_index_test=data["group_index_test"],
+            split_key=split_key_obj,
+            split_index=split_index
+        )
+
+
+class DataSplitsFactory:
+    """Factory for creating DataSplits instances for testing."""
+    @classmethod
+    def simple(
+        cls,
+        n_splits: int = 3,
+        group_name: str = "test_group",
+        dataset_name: str = "test_data.csv",
+        problem_type: str = "regression"
+    ):
+        """Create a DataSplits instance with multiple splits."""
+        splits = data_splits.DataSplits(n_splits=n_splits)
+        
+        for i in range(n_splits):
+            split_info = DataSplitInfoFactory.simple(
+                split_index=i,
+                group_name=group_name,
+                dataset_name=dataset_name,
+                problem_type=problem_type
+            )
+            splits.add(split_info)
+        
+        return splits
+
