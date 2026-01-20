@@ -27,7 +27,7 @@ class TestConfigurationManagerIntegration:
             manager.algorithm_config = AlgorithmFactory.collection()
             manager.base_data_manager = data_manager.DataManager()
 
-            with pytest.raises(AttributeError):
+            with pytest.raises(ImportError):
                 manager.create_experiment_queue()
 
     def test_create_experiment_queue_0_n_splits(self, tmp_path):

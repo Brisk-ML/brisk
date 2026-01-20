@@ -44,7 +44,7 @@ from brisk.reporting import report_renderer
 from brisk.configuration import configuration_manager, experiment
 from brisk.version import __version__
 from brisk.training import workflow as workflow_module
-from brisk.services import get_services
+from brisk.services import get_services, missing, bundle
 
 warnings.filterwarnings(
     "ignore",
@@ -163,8 +163,8 @@ class TrainingManager:
         The experiment_paths structure is a nested defaultdict that tracks
         output paths for each experiment group, dataset, split, and experiment.
         """
-        self.services = get_services()
-        self.results_dir = self.services.io.results_dir
+        self.services = missing.MissingServices()
+        self.results_dir = None
         self.metric_config = metric_config
         self.eval_manager = evaluation_manager.EvaluationManager(
             self.metric_config
@@ -186,6 +186,13 @@ class TrainingManager:
         )
         self.experiment_results = None
         self._reset_experiment_results()
+
+    def set_services(self, services: Optional[bundle.ServiceBundle] = None):
+        if services is None:
+            self.services = get_services()
+        else:
+            self.services = services
+        self.results_dir = self.services.io.results_dir
 
     def run_experiments(
         self,

@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 import numpy as np
 import pandas as pd
-from pandas.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal, assert_series_equal
 from sklearn.preprocessing import MinMaxScaler
 
 from brisk.data.data_split_info import DataSplitInfo
@@ -80,14 +80,14 @@ class TestDataSplitInfoUnit:
         data["X_train"].loc[0, "feature_0"] = 12345
         assert split.X_train.loc[0, "feature_0"] != 12345
 
-        data["y_train"].loc[0, "target"] = 12345
-        assert split.y_train.loc[0, "target"] != 12345
+        data["y_train"].loc[0] = 12345
+        assert split.y_train.loc[0] != 12345
 
         data["X_test"].loc[0, "feature_0"] = 12345
         assert split.X_test.loc[0, "feature_0"] != 12345
 
-        data["y_test"].loc[0, "target"] = 12345
-        assert split.y_test.loc[0, "target"] != 12345
+        data["y_test"].loc[0] = 12345
+        assert split.y_test.loc[0] != 12345
 
     def test_evaluate_data_split_clear_context_happy(self, split_key):
         data = DataFrameFactory.train_test_split(
@@ -234,7 +234,7 @@ class TestDataSplitInfoUnit:
         )
         x_train, y_train = split.get_train()
         mock_scaler.transform.assert_called_once()
-        assert_frame_equal(y_train, data["y_train"])
+        assert_series_equal(y_train, data["y_train"])
         assert x_train.size == data["X_train"].size
 
     def test_get_train_no_scaler(self, split_key):
@@ -249,7 +249,7 @@ class TestDataSplitInfoUnit:
             continuous_features=["feature_0"]
         )
         x_train, y_train = split.get_train()
-        assert_frame_equal(y_train, data["y_train"])
+        assert_series_equal(y_train, data["y_train"])
         assert_frame_equal(x_train, data["X_train"])
         assert x_train.size == data["X_train"].size
 
@@ -269,7 +269,7 @@ class TestDataSplitInfoUnit:
         )
         x_train, y_train = split.get_train()
         mock_scaler.transform.assert_called_once()
-        assert_frame_equal(y_train, data["y_train"])
+        assert_series_equal(y_train, data["y_train"])
         assert x_train.size == data["X_train"].size
 
     def test_get_train_correct_column_order(self, split_key):
@@ -321,7 +321,7 @@ class TestDataSplitInfoUnit:
         )
         x_test, y_test = split.get_test()
         mock_scaler.transform.assert_called_once()
-        assert_frame_equal(y_test, data["y_test"])
+        assert_series_equal(y_test, data["y_test"])
         assert x_test.size == data["X_test"].size
 
     def test_get_test_no_scaler(self, split_key):
@@ -336,7 +336,7 @@ class TestDataSplitInfoUnit:
             continuous_features=["feature_0"]
         )
         x_test, y_test = split.get_test()
-        assert_frame_equal(y_test, data["y_test"])
+        assert_series_equal(y_test, data["y_test"])
         assert_frame_equal(x_test, data["X_test"])
         assert x_test.size == data["X_test"].size
 
@@ -356,7 +356,7 @@ class TestDataSplitInfoUnit:
         )
         x_test, y_test = split.get_test()
         mock_scaler.transform.assert_called_once()
-        assert_frame_equal(y_test, data["y_test"])
+        assert_series_equal(y_test, data["y_test"])
         assert x_test.size == data["X_test"].size
 
     def test_get_test_correct_column_order(self, split_key):
@@ -405,8 +405,8 @@ class TestDataSplitInfoUnit:
         train_test = split.get_train_test()
         assert_frame_equal(data["X_train"], train_test[0]) 
         assert_frame_equal(data["X_test"], train_test[1]) 
-        assert_frame_equal(data["y_train"], train_test[2]) 
-        assert_frame_equal(data["y_test"], train_test[3]) 
+        assert_series_equal(data["y_train"], train_test[2]) 
+        assert_series_equal(data["y_test"], train_test[3]) 
  
     def test_get_split_metadata_categorical_features(self, split_key):
         data = DataFrameFactory.train_test_split(

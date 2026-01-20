@@ -314,6 +314,7 @@ class TestIOService:
         
         assert output_path.exists()
 
+    @pytest.mark.slow
     def test_save_plot_plotly(self, io_service, tmp_path):
         """Test save_plot with plotly figure."""
         output_path = tmp_path / "plotly_plot.png"
@@ -379,6 +380,7 @@ class TestIOService:
         svg_str = call_args[0][0]
         assert svg_str.startswith('<?xml') or svg_str.startswith('<svg')
 
+    @pytest.mark.slow
     def test_save_plot_svg_conversion_plotly(self, io_service, tmp_path):
         """Test SVG conversion for plotly figures."""
         output_path = tmp_path / "plot.png"
