@@ -77,7 +77,7 @@ RUN_TEST_CONFIGS = [
         ),
         id="regression_db_multi"
     ),
-    
+
     # Binary classification tests
     pytest.param(
         E2ETestConfig(
@@ -133,7 +133,7 @@ RUN_TEST_CONFIGS = [
         ),
         id="binary_db_multi"
     ),
-    
+
     # Multiclass classification tests
     pytest.param(
         E2ETestConfig(
@@ -196,13 +196,15 @@ RUN_TEST_CONFIGS = [
 # Run Command Tests
 # =============================================================================
 
+
+@pytest.mark.e2e
 class TestRunCommand:
     """Test the brisk run command across all configurations."""
-    
+
     @pytest.mark.parametrize("e2e_project", RUN_TEST_CONFIGS, indirect=True)
     def test_run(self, e2e_project):
         """Test that brisk run completes successfully.
-        
+
         Verifies:
         - Command exits with code 0
         - Results directory is created
@@ -212,12 +214,12 @@ class TestRunCommand:
         """
         config = e2e_project["config"]
         project_dir = e2e_project["project_dir"]
-        
+
         result = run_brisk_command(
             project_dir=project_dir,
             results_name=config.test_id
         )
-        
+
         assert_run_success(result)
 
 
@@ -225,7 +227,8 @@ class TestRunCommand:
 # Rerun Command Tests
 # =============================================================================
 
-# Representative rerun test configurations (one per problem type, different formats)
+# Representative rerun test configurations (one per problem type,
+# different formats)
 RERUN_TEST_CONFIGS = [
     pytest.param(
         E2ETestConfig(
@@ -257,13 +260,14 @@ RERUN_TEST_CONFIGS = [
 ]
 
 
+@pytest.mark.e2e
 class TestRerunCommand:
     """Test the brisk run -f (rerun) command functionality."""
-    
+
     @pytest.mark.parametrize("e2e_project", RERUN_TEST_CONFIGS, indirect=True)
     def test_rerun(self, e2e_project):
         """Test that rerun from saved config works correctly.
-        
+
         This test:
         1. Runs an initial experiment
         2. Reruns from the saved config
@@ -271,22 +275,22 @@ class TestRerunCommand:
         """
         config = e2e_project["config"]
         project_dir = e2e_project["project_dir"]
-        
+
         # Step 1: Initial run
         initial_run_name = f"{config.test_id}_initial"
         initial_result = run_brisk_command(
             project_dir=project_dir,
             results_name=initial_run_name
         )
-        
+
         assert_run_success(initial_result)
-        
+
         # Verify run_config.json exists (required for rerun)
         config_path = initial_result.results_dir / "run_config.json"
         assert config_path.exists(), (
             f"run_config.json not found at {config_path}"
         )
-        
+
         # Step 2: Rerun from saved config
         rerun_name = f"{config.test_id}_rerun"
         rerun_result = run_brisk_command(
@@ -294,6 +298,6 @@ class TestRerunCommand:
             results_name=rerun_name,
             config_file=initial_run_name
         )
-        
+
         # Reruns don't create new run_config.json (they use coordinate mode)
         assert_run_success(rerun_result, is_rerun=True)

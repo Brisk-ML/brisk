@@ -7,8 +7,10 @@ import pytest
 
 from brisk.configuration import project
 from brisk.configuration import configuration
-from brisk.services import bundle, missing 
+from brisk.services import bundle, missing
 from brisk.theme import plot_settings
+
+# pylint: disable=W0621, W0613
 
 @pytest.fixture()
 def mock_rerun_service():
@@ -26,20 +28,20 @@ def mock_rerun_service():
         "workflows": {},
         "datasets": {},
     }
-    
+
     def add_configuration(config_dict):
         mock.configs["configuration"] = config_dict
-    
+
     def add_experiment_groups(groups_list):
         mock.configs["experiment_groups"] = groups_list
-    
+
     def collect_dataset_metadata(groups_list):
         mock.configs["datasets"] = {"collected": True}
-    
+
     mock.add_configuration.side_effect = add_configuration
     mock.add_experiment_groups.side_effect = add_experiment_groups
     mock.collect_dataset_metadata.side_effect = collect_dataset_metadata
-    
+
     return mock
 
 
@@ -100,7 +102,7 @@ def config_with_experiment_groups(mock_services, tmp_path):
         default_workflow_args={"cv_folds": 5}
     )
     config.set_services(mock_services)
-    
+
     root = pathlib.Path(tmp_path)
     with project.ProjectRootContext(root):
         dataset_dir = root / "datasets"
@@ -115,7 +117,7 @@ def config_with_experiment_groups(mock_services, tmp_path):
             datasets=["data1.csv", "data2.csv"],
             description="First test group"
         )
-        
+
         config.add_experiment_group(
             name="group2",
             datasets=[("data3.xlsx", "Sheet1"), "data4.csv"],
@@ -126,10 +128,11 @@ def config_with_experiment_groups(mock_services, tmp_path):
             workflow="custom_workflow",
             workflow_args={"cv_folds": 10}
         )
-    
+
     return config
 
 
+@pytest.mark.integration
 class TestConfigurationIntegration():
     """Test exported params and JSON serialization of these params."""
     def test_minimal_config_is_json_serializable(
@@ -147,7 +150,7 @@ class TestConfigurationIntegration():
 
         deserialized_config = json.loads(config_str)
         deserialized_groups = json.loads(groups_str)
-        
+
         assert isinstance(deserialized_config, dict)
         assert isinstance(deserialized_groups, list)
         assert deserialized_config == config_json
@@ -167,7 +170,7 @@ class TestConfigurationIntegration():
 
         deserialized_config = json.loads(config_str)
         deserialized_groups = json.loads(groups_str)
-        
+
         assert isinstance(deserialized_config, dict)
         assert isinstance(deserialized_groups, list)
         assert deserialized_config == config_json
@@ -187,14 +190,14 @@ class TestConfigurationIntegration():
 
         deserialized_config = json.loads(config_str)
         deserialized_groups = json.loads(groups_str)
-        
+
         assert isinstance(deserialized_config, dict)
         assert isinstance(deserialized_groups, list)
         assert deserialized_config == config_json
 
     def test_minimal_config_values(self, minimal_config, mock_services):
         minimal_config.export_params()
-        
+
         config_json = mock_services.rerun.configs["configuration"]
 
         assert config_json["default_workflow"] == "workflow"
@@ -207,7 +210,7 @@ class TestConfigurationIntegration():
     ):
         """Test that configuration with optionals has correct values."""
         config_with_optionals.export_params()
-        
+
         config_json = mock_services.rerun.configs["configuration"]
 
         assert config_json["default_workflow"] == "custom_workflow"
@@ -216,31 +219,31 @@ class TestConfigurationIntegration():
             "param1": "value1",
             "param2": 42
         }
-        
+
     def test_config_with_optionals_categortical_feature_values(
         self, config_with_optionals, mock_services
     ):
         config_with_optionals.export_params()
-        
+
         config_json = mock_services.rerun.configs["configuration"]
 
         cat_features = config_json["categorical_features"]
         assert isinstance(cat_features, list)
         assert len(cat_features) == 2
-        
+
         # Find the categorical feature items
         dataset1_item = next(
-            item for item in cat_features 
+            item for item in cat_features
             if item["dataset"] == "dataset1.csv"
         )
         dataset2_item = next(
-            item for item in cat_features 
+            item for item in cat_features
             if item["dataset"] == "dataset2.xlsx"
         )
-        
+
         assert dataset1_item["table_name"] is None
         assert dataset1_item["features"] == ["cat1", "cat2"]
-        
+
         assert dataset2_item["table_name"] == "Sheet1"
         assert dataset2_item["features"] == ["cat3"]
 
@@ -249,10 +252,10 @@ class TestConfigurationIntegration():
     ):
         """Test simple experiment group has correct values."""
         config_with_experiment_groups.export_params()
-        
+
         groups_json = mock_services.rerun.configs["experiment_groups"]
         group1 = groups_json[0]
-        
+
         assert group1["name"] == "group1"
         assert group1["description"] == "First test group"
         assert group1["workflow"] == "workflow"
@@ -260,7 +263,7 @@ class TestConfigurationIntegration():
         assert group1["data_config"] == {}
         assert group1["algorithm_config"] == {}
         assert group1["workflow_args"] == {"cv_folds": 5}
-        
+
         # Check datasets structure
         assert len(group1["datasets"]) == 2
         assert group1["datasets"][0] == {
@@ -277,10 +280,10 @@ class TestConfigurationIntegration():
     ):
         """Test advanced experiment group has correct values."""
         config_with_experiment_groups.export_params()
-        
+
         groups_json = mock_services.rerun.configs["experiment_groups"]
         group2 = groups_json[1]
-        
+
         assert group2["name"] == "group2"
         assert group2["description"] == "Advanced group"
         assert group2["workflow"] == "custom_workflow"
@@ -291,7 +294,7 @@ class TestConfigurationIntegration():
         }
         assert group2["algorithm_config"] == {"rf": {"n_estimators": 100}}
         assert group2["workflow_args"] == {"cv_folds": 10}
-        
+
         # Check datasets with mixed types
         assert len(group2["datasets"]) == 2
         assert group2["datasets"][0] == {
@@ -302,15 +305,15 @@ class TestConfigurationIntegration():
             "dataset": "data4.csv",
             "table_name": None
         }
-   
+
     def test_empty_categorical_features(self, minimal_config, mock_services):
         """Test that empty categorical features exports correctly."""
         minimal_config.export_params()
-        
+
         config_json = mock_services.rerun.configs["configuration"]
-        
+
         assert config_json["categorical_features"] == []
-    
+
     def test_none_table_name_in_categorical_features(self, mock_services):
         """Test categorical features with None table names."""
         config = configuration.Configuration(
@@ -322,15 +325,15 @@ class TestConfigurationIntegration():
         )
         config.set_services(mock_services)
         config.export_params()
-        
+
         config_json = mock_services.rerun.configs["configuration"]
         cat_features = config_json["categorical_features"]
-        
+
         assert len(cat_features) == 1
         assert cat_features[0]["dataset"] == "data.csv"
         assert cat_features[0]["table_name"] is None
         assert cat_features[0]["features"] == ["cat1", "cat2"]
-    
+
     def test_dataset_tuple_conversion(self, mock_services, tmp_path):
         """Test that dataset tuples are properly converted to dict format."""
         config = configuration.Configuration(
@@ -338,7 +341,7 @@ class TestConfigurationIntegration():
             default_algorithms=["ridge"]
         )
         config.set_services(mock_services)
-        
+
         root = pathlib.Path(tmp_path)
         with project.ProjectRootContext(root):
             dataset_dir = root / "datasets"
@@ -356,12 +359,12 @@ class TestConfigurationIntegration():
                     ("file3.db", "table1")
                 ]
             )
-        
+
         config.export_params()
-        
+
         groups_json = mock_services.rerun.configs["experiment_groups"]
         datasets = groups_json[0]["datasets"]
-        
+
         assert datasets[0] == {"dataset": "file1.xlsx", "table_name": "Sheet1"}
         assert datasets[1] == {"dataset": "file2.csv", "table_name": None}
         assert datasets[2] == {"dataset": "file3.db", "table_name": "table1"}

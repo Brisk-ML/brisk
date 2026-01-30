@@ -21,10 +21,11 @@ def split_key():
     )
 
 
+@pytest.mark.unit
 class TestDataSplitInfoUnit:
     def test_initialization(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=10, n_features=2, problem_type="regression", 
+            n_samples=10, n_features=2, problem_type="regression",
             feature_types=["continuous", "categorical"]
         )
         split = DataSplitInfo(
@@ -40,7 +41,7 @@ class TestDataSplitInfoUnit:
 
     def test_initializatioin_no_optional(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=10, n_features=2, problem_type="regression", 
+            n_samples=10, n_features=2, problem_type="regression",
             feature_types=["continuous", "categorical"]
         )
         split = DataSplitInfo(
@@ -69,7 +70,7 @@ class TestDataSplitInfoUnit:
 
     def test_init_creates_deep_copy(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=10, n_features=2, problem_type="regression", 
+            n_samples=10, n_features=2, problem_type="regression",
             feature_types=["continuous", "categorical"]
         )
         split = DataSplitInfo(
@@ -91,7 +92,7 @@ class TestDataSplitInfoUnit:
 
     def test_evaluate_data_split_clear_context_happy(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=10, n_features=2, problem_type="regression", 
+            n_samples=10, n_features=2, problem_type="regression",
             feature_types=["continuous", "categorical"]
         )
         split = DataSplitInfo(
@@ -111,7 +112,7 @@ class TestDataSplitInfoUnit:
 
     def test_evaluate_data_split_clear_context_error(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=10, n_features=2, problem_type="regression", 
+            n_samples=10, n_features=2, problem_type="regression",
             feature_types=["continuous", "categorical"]
         )
         split = DataSplitInfo(
@@ -136,7 +137,7 @@ class TestDataSplitInfoUnit:
 
     def test_detect_categorical_features_1_percent_unique(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=100, n_features=1, problem_type="regression", 
+            n_samples=100, n_features=1, problem_type="regression",
             feature_types=["categorical"]
         )
         data["X_train"] = pd.DataFrame({
@@ -151,10 +152,10 @@ class TestDataSplitInfoUnit:
             split_index = 1
         )
         assert split.categorical_features == ["feature_0"]
-        
+
     def test_detect_categorical_features_5_percent_unique(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=100, n_features=1, problem_type="regression", 
+            n_samples=100, n_features=1, problem_type="regression",
             feature_types=["categorical"]
         )
         data["X_train"] = pd.DataFrame({
@@ -172,7 +173,7 @@ class TestDataSplitInfoUnit:
 
     def test_detect_categorical_features_10_percent_unique(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=100, n_features=1, problem_type="regression", 
+            n_samples=100, n_features=1, problem_type="regression",
             feature_types=["categorical"]
         )
         data["X_train"] = pd.DataFrame({
@@ -190,7 +191,7 @@ class TestDataSplitInfoUnit:
 
     def test_detect_categorical_features_string_data(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=100, n_features=2, problem_type="regression", 
+            n_samples=100, n_features=2, problem_type="regression",
             feature_types=["categorical"] * 2
         )
         split = DataSplitInfo(
@@ -202,7 +203,7 @@ class TestDataSplitInfoUnit:
 
     def test_detect_categorical_features_pd_categorical_data(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=100, n_features=1, problem_type="regression", 
+            n_samples=100, n_features=1, problem_type="regression",
             feature_types=["categorical"]
         )
         data["X_train"] = pd.DataFrame({
@@ -220,7 +221,7 @@ class TestDataSplitInfoUnit:
 
     def test_get_train_scaler_fitted(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=10, n_features=1, problem_type="regression", 
+            n_samples=10, n_features=1, problem_type="regression",
             feature_types=["continuous"]
         )
         mock_scaler = Mock()
@@ -239,7 +240,7 @@ class TestDataSplitInfoUnit:
 
     def test_get_train_no_scaler(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=10, n_features=2, problem_type="regression", 
+            n_samples=10, n_features=2, problem_type="regression",
             feature_types=["continuous", "categorical"]
         )
         split = DataSplitInfo(
@@ -255,7 +256,7 @@ class TestDataSplitInfoUnit:
 
     def test_get_train_categorical_and_scaler(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=10, n_features=2, problem_type="regression", 
+            n_samples=10, n_features=2, problem_type="regression",
             feature_types=["continuous", "categorical"]
         )
         mock_scaler = Mock()
@@ -274,7 +275,7 @@ class TestDataSplitInfoUnit:
 
     def test_get_train_correct_column_order(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=10, n_features=6, problem_type="regression", 
+            n_samples=10, n_features=6, problem_type="regression",
             feature_types=["continuous", "categorical", "continuous"] * 2
         )
         column_order = data["X_train"].columns
@@ -287,11 +288,11 @@ class TestDataSplitInfoUnit:
         )
         x_train, _ = split.get_train()
         assert x_train.size == data["X_train"].size
-        assert x_train.columns.all() == column_order.all() 
+        assert x_train.columns.all() == column_order.all()
 
     def test_get_train_correct_index(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=10, n_features=2, problem_type="regression", 
+            n_samples=10, n_features=2, problem_type="regression",
             feature_types=["continuous", "categorical"]
         )
         minmax_scaler = MinMaxScaler().fit(data["X_train"].iloc[:, [0]])
@@ -307,7 +308,7 @@ class TestDataSplitInfoUnit:
 
     def test_get_test_scaler_fitted(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=10, n_features=1, problem_type="regression", 
+            n_samples=10, n_features=1, problem_type="regression",
             feature_types=["continuous"]
         )
         mock_scaler = Mock()
@@ -326,7 +327,7 @@ class TestDataSplitInfoUnit:
 
     def test_get_test_no_scaler(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=10, n_features=2, problem_type="regression", 
+            n_samples=10, n_features=2, problem_type="regression",
             feature_types=["continuous", "categorical"]
         )
         split = DataSplitInfo(
@@ -342,7 +343,7 @@ class TestDataSplitInfoUnit:
 
     def test_get_test_categorical_and_scaler(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=10, n_features=2, problem_type="regression", 
+            n_samples=10, n_features=2, problem_type="regression",
             feature_types=["continuous", "categorical"]
         )
         mock_scaler = Mock()
@@ -361,7 +362,7 @@ class TestDataSplitInfoUnit:
 
     def test_get_test_correct_column_order(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=10, n_features=6, problem_type="regression", 
+            n_samples=10, n_features=6, problem_type="regression",
             feature_types=["continuous", "categorical", "continuous"] * 2
         )
         column_order = data["X_test"].columns
@@ -374,11 +375,11 @@ class TestDataSplitInfoUnit:
         )
         x_test, _ = split.get_test()
         assert x_test.size == data["X_test"].size
-        assert x_test.columns.all() == column_order.all() 
+        assert x_test.columns.all() == column_order.all()
 
     def test_get_test_correct_index(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=10, n_features=2, problem_type="regression", 
+            n_samples=10, n_features=2, problem_type="regression",
             feature_types=["continuous", "categorical"]
         )
         minmax_scaler = MinMaxScaler().fit(data["X_test"].iloc[:, [0]])
@@ -394,7 +395,7 @@ class TestDataSplitInfoUnit:
 
     def test_get_train_test_order(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=10, n_features=2, problem_type="regression", 
+            n_samples=10, n_features=2, problem_type="regression",
             feature_types=["continuous", "categorical"]
         )
         split = DataSplitInfo(
@@ -403,14 +404,14 @@ class TestDataSplitInfoUnit:
             split_index = 1
         )
         train_test = split.get_train_test()
-        assert_frame_equal(data["X_train"], train_test[0]) 
-        assert_frame_equal(data["X_test"], train_test[1]) 
-        assert_series_equal(data["y_train"], train_test[2]) 
-        assert_series_equal(data["y_test"], train_test[3]) 
- 
+        assert_frame_equal(data["X_train"], train_test[0])
+        assert_frame_equal(data["X_test"], train_test[1])
+        assert_series_equal(data["y_train"], train_test[2])
+        assert_series_equal(data["y_test"], train_test[3])
+
     def test_get_split_metadata_categorical_features(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=22, n_features=3, problem_type="regression", 
+            n_samples=22, n_features=3, problem_type="regression",
             feature_types=["categorical"] * 3
         )
         split = DataSplitInfo(
@@ -424,7 +425,7 @@ class TestDataSplitInfoUnit:
 
     def test_get_split_metadata_continuous_features(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=18, n_features=5, problem_type="regression", 
+            n_samples=18, n_features=5, problem_type="regression",
             feature_types=["continuous"] * 5
         )
         split = DataSplitInfo(
@@ -438,7 +439,7 @@ class TestDataSplitInfoUnit:
 
     def test_get_split_metadata_mixed_features(self, split_key):
         data = DataFrameFactory.train_test_split(
-            n_samples=11, n_features=4, problem_type="regression", 
+            n_samples=11, n_features=4, problem_type="regression",
             feature_types=["continuous", "categorical"] * 2
         )
         split = DataSplitInfo(

@@ -28,6 +28,7 @@ def data_split_info():
     )
 
 
+@pytest.mark.unit
 class TestDataSplitsUnit:
     def test_initalization_0_splits(self):
         with pytest.raises(ValueError):

@@ -5,7 +5,12 @@ from sklearn import linear_model, base
 
 from brisk import AlgorithmWrapper
 
+# pylint: disable=W0612
+
+@pytest.mark.unit
 class TestAlgorithmWrapperUnit():
+    """Unit tests for the AlgorithmWrapper class."""
+
     def test_instantiate_no_optional(self):
         wrapper = AlgorithmWrapper(
             name="test_wrapper",
@@ -17,7 +22,7 @@ class TestAlgorithmWrapperUnit():
 
     def test_instantiate_all_optionals(self):
         default_params = {"max_iter": 1000}
-        hyperparam_grid = {"alpha": [0.1, 0.5, 1.0]} 
+        hyperparam_grid = {"alpha": [0.1, 0.5, 1.0]}
         wrapper = AlgorithmWrapper(
             name="test_wrapper",
             display_name="Test Wrapper",
@@ -76,7 +81,7 @@ class TestAlgorithmWrapperUnit():
         )
         assert wrapper.default_params == {}
         default_params = {"max_iter": 1000, "alpha": 0.6}
-        wrapper["default_params"] = default_params  
+        wrapper["default_params"] = default_params
         assert wrapper.default_params == default_params
 
     def test_set_hyperparam_grid(self):
@@ -87,7 +92,7 @@ class TestAlgorithmWrapperUnit():
         )
         assert wrapper.hyperparam_grid == {}
         hyperparam_grid = {"alpha": [0.6, 0.65, 0.7]}
-        wrapper["hyperparam_grid"] = hyperparam_grid  
+        wrapper["hyperparam_grid"] = hyperparam_grid
         assert wrapper.hyperparam_grid == hyperparam_grid
 
     def test_set_invalid_key(self):
@@ -97,7 +102,7 @@ class TestAlgorithmWrapperUnit():
             algorithm_class = linear_model.Ridge
         )
         with pytest.raises(KeyError):
-            wrapper["invalid_key"] = {"test": "error"}  
+            wrapper["invalid_key"] = {"test": "error"}
 
     def test_update_existing_dict_key(self):
         wrapper = AlgorithmWrapper(

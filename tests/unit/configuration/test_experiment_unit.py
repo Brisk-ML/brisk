@@ -7,7 +7,12 @@ from brisk.configuration.experiment import Experiment
 
 from tests.utils.factories import AlgorithmFactory
 
+# pylint: disable=W0612
+
+@pytest.mark.unit
 class TestExperiment:
+    """Unit tests for the Experiment class."""
+
     def test_initalization(self, tmp_path):
         ridge_wrapper = AlgorithmFactory.simple()
         experiment = Experiment(
@@ -42,7 +47,7 @@ class TestExperiment:
                 table_name=None,
                 categorical_features=["species"]
             )
-    
+
     def test_three_algorithms(self, tmp_path):
         """Test we handle a variable number of algorithms."""
         ridge_wrapper = AlgorithmFactory.simple()
@@ -104,7 +109,7 @@ class TestExperiment:
             table_name="table_in_database"
         )
         assert experiment.dataset_name == ("data", "table_in_database")
-    
+
     def test_str_dataset_path(self, tmp_path):
         """If dataset_path is a string convert to a Path instance"""
         ridge_wrapper = AlgorithmFactory.simple()

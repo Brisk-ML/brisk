@@ -202,13 +202,11 @@ class EvaluationManager:
         project_root = project.find_project_root()
         evaluators_file = project_root / "evaluators.py"
 
-        if evaluators_file.exists():
-            module = self.services.io.load_custom_evaluators(evaluators_file)
-        else:
-            raise FileNotFoundError(
-                f"evaluators.py not found in {project_root}"
-            )
+        # Custom evaluators are optional - skip if file doesn't exist
+        if not evaluators_file.exists():
+            return
 
+        module = self.services.io.load_custom_evaluators(evaluators_file)
         if module:
             module.register_custom_evaluators(self.registry, theme)
             self._check_unregistered_evaluators(module)

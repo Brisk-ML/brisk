@@ -9,24 +9,17 @@ The environment commands are tested together to ensure they properly
 detect matching and differing environments.
 """
 import json
-import os
 import pathlib
-import platform
-import subprocess
-import sys
 from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
 
-from brisk.cli.cli import cli, create, export_env, check_env
+from brisk.cli.cli import create, export_env, check_env
 from brisk.cli.environment import EnvironmentManager
 from brisk.configuration import project
 
-
-# =============================================================================
-# Fixtures
-# =============================================================================
+# pylint: disable=W0621, W0613
 
 @pytest.fixture(autouse=True)
 def clear_project_root_cache():
@@ -68,14 +61,14 @@ def create_run_config(
     env_data: dict
 ) -> pathlib.Path:
     """Create a mock run_config.json file with environment data.
-    
+
     Parameters
     ----------
     results_dir : pathlib.Path
         Directory to create the config in
     env_data : dict
         Environment data to include
-        
+
     Returns
     -------
     pathlib.Path
@@ -83,12 +76,12 @@ def create_run_config(
     """
     results_dir.mkdir(parents=True, exist_ok=True)
     config_path = results_dir / "run_config.json"
-    
+
     config = {
         "env": env_data,
         "experiment_groups": []
     }
-    
+
     config_path.write_text(json.dumps(config, indent=2))
     return config_path
 
@@ -97,15 +90,17 @@ def create_run_config(
 # Create Command Tests
 # =============================================================================
 
+
+@pytest.mark.integration
 class TestCreateCommand:
     """Tests for the 'brisk create' command."""
 
     def test_create_project_directory(self, cli_runner, tmp_path, monkeypatch):
         """Test that create command creates project directory."""
         monkeypatch.chdir(tmp_path)
-        
+
         result = cli_runner.invoke(create, ["-n", "my_project"])
-        
+
         assert result.exit_code == 0
         assert (tmp_path / "my_project").exists()
         assert "new project was created" in result.output
@@ -113,9 +108,9 @@ class TestCreateCommand:
     def test_create_briskconfig(self, cli_runner, tmp_path, monkeypatch):
         """Test that create command creates .briskconfig file."""
         monkeypatch.chdir(tmp_path)
-        
+
         result = cli_runner.invoke(create, ["-n", "my_project"])
-        
+
         assert result.exit_code == 0
         config_file = tmp_path / "my_project" / ".briskconfig"
         assert config_file.exists()
@@ -125,23 +120,24 @@ class TestCreateCommand:
     def test_create_settings_py(self, cli_runner, tmp_path, monkeypatch):
         """Test that create command creates settings.py file."""
         monkeypatch.chdir(tmp_path)
-        
+
         result = cli_runner.invoke(create, ["-n", "my_project"])
-        
+
         assert result.exit_code == 0
         settings_file = tmp_path / "my_project" / "settings.py"
         assert settings_file.exists()
         content = settings_file.read_text()
-        assert "from brisk.configuration.configuration import Configuration" in content
+        config_import = "from brisk.configuration.configuration import"
+        assert config_import in content
         assert "def create_configuration()" in content
         assert "ConfigurationManager" in content
 
     def test_create_algorithms_py(self, cli_runner, tmp_path, monkeypatch):
         """Test that create command creates algorithms.py file."""
         monkeypatch.chdir(tmp_path)
-        
+
         result = cli_runner.invoke(create, ["-n", "my_project"])
-        
+
         assert result.exit_code == 0
         algorithms_file = tmp_path / "my_project" / "algorithms.py"
         assert algorithms_file.exists()
@@ -153,9 +149,9 @@ class TestCreateCommand:
     def test_create_metrics_py(self, cli_runner, tmp_path, monkeypatch):
         """Test that create command creates metrics.py file."""
         monkeypatch.chdir(tmp_path)
-        
+
         result = cli_runner.invoke(create, ["-n", "my_project"])
-        
+
         assert result.exit_code == 0
         metrics_file = tmp_path / "my_project" / "metrics.py"
         assert metrics_file.exists()
@@ -166,9 +162,9 @@ class TestCreateCommand:
     def test_create_data_py(self, cli_runner, tmp_path, monkeypatch):
         """Test that create command creates data.py file."""
         monkeypatch.chdir(tmp_path)
-        
+
         result = cli_runner.invoke(create, ["-n", "my_project"])
-        
+
         assert result.exit_code == 0
         data_file = tmp_path / "my_project" / "data.py"
         assert data_file.exists()
@@ -179,9 +175,9 @@ class TestCreateCommand:
     def test_create_evaluators_py(self, cli_runner, tmp_path, monkeypatch):
         """Test that create command creates evaluators.py file."""
         monkeypatch.chdir(tmp_path)
-        
+
         result = cli_runner.invoke(create, ["-n", "my_project"])
-        
+
         assert result.exit_code == 0
         evaluators_file = tmp_path / "my_project" / "evaluators.py"
         assert evaluators_file.exists()
@@ -189,12 +185,14 @@ class TestCreateCommand:
         assert "EvaluatorRegistry" in content
         assert "register_custom_evaluators" in content
 
-    def test_create_workflows_directory(self, cli_runner, tmp_path, monkeypatch):
+    def test_create_workflows_directory(
+        self, cli_runner, tmp_path, monkeypatch
+    ):
         """Test that create command creates workflows directory."""
         monkeypatch.chdir(tmp_path)
-        
+
         result = cli_runner.invoke(create, ["-n", "my_project"])
-        
+
         assert result.exit_code == 0
         workflows_dir = tmp_path / "my_project" / "workflows"
         assert workflows_dir.exists()
@@ -203,9 +201,9 @@ class TestCreateCommand:
     def test_create_workflow_template(self, cli_runner, tmp_path, monkeypatch):
         """Test that create command creates workflow.py template."""
         monkeypatch.chdir(tmp_path)
-        
+
         result = cli_runner.invoke(create, ["-n", "my_project"])
-        
+
         assert result.exit_code == 0
         workflow_file = tmp_path / "my_project" / "workflows" / "workflow.py"
         assert workflow_file.exists()
@@ -216,9 +214,9 @@ class TestCreateCommand:
     def test_create_datasets_directory(self, cli_runner, tmp_path, monkeypatch):
         """Test that create command creates datasets directory."""
         monkeypatch.chdir(tmp_path)
-        
+
         result = cli_runner.invoke(create, ["-n", "my_project"])
-        
+
         assert result.exit_code == 0
         datasets_dir = tmp_path / "my_project" / "datasets"
         assert datasets_dir.exists()
@@ -227,12 +225,12 @@ class TestCreateCommand:
     def test_create_all_expected_files(self, cli_runner, tmp_path, monkeypatch):
         """Test that create command creates all expected files."""
         monkeypatch.chdir(tmp_path)
-        
+
         result = cli_runner.invoke(create, ["-n", "my_project"])
-        
+
         assert result.exit_code == 0
         project_dir = tmp_path / "my_project"
-        
+
         expected_files = [
             ".briskconfig",
             "settings.py",
@@ -242,15 +240,15 @@ class TestCreateCommand:
             "evaluators.py",
             "workflows/workflow.py",
         ]
-        
+
         expected_dirs = [
             "datasets",
             "workflows",
         ]
-        
+
         for file_path in expected_files:
             assert (project_dir / file_path).exists(), f"Missing: {file_path}"
-        
+
         for dir_path in expected_dirs:
             assert (project_dir / dir_path).is_dir(), f"Missing dir: {dir_path}"
 
@@ -259,6 +257,8 @@ class TestCreateCommand:
 # Export-Env Command Tests
 # =============================================================================
 
+
+@pytest.mark.integration
 class TestExportEnvCommand:
     """Tests for the 'brisk export-env' command."""
 
@@ -268,7 +268,7 @@ class TestExportEnvCommand:
         """Test that export-env creates a requirements.txt file."""
         run_id = "test_run_001"
         results_dir = project_dir / "results" / run_id
-        
+
         env_data = {
             "timestamp": "2024-01-01T12:00:00",
             "python": {"version": "3.10.0"},
@@ -278,9 +278,9 @@ class TestExportEnvCommand:
             }
         }
         create_run_config(results_dir, env_data)
-        
+
         result = cli_runner.invoke(export_env, [run_id])
-        
+
         assert result.exit_code == 0
         assert "Requirements exported to" in result.output
 
@@ -288,7 +288,7 @@ class TestExportEnvCommand:
         """Test export-env with custom output path."""
         run_id = "test_run_002"
         results_dir = project_dir / "results" / run_id
-        
+
         env_data = {
             "timestamp": "2024-01-01T12:00:00",
             "python": {"version": "3.10.0"},
@@ -297,12 +297,12 @@ class TestExportEnvCommand:
             }
         }
         create_run_config(results_dir, env_data)
-        
+
         output_path = project_dir / "custom_requirements.txt"
         result = cli_runner.invoke(
             export_env, [run_id, "--output", str(output_path)]
         )
-        
+
         assert result.exit_code == 0
         assert output_path.exists()
         content = output_path.read_text()
@@ -312,7 +312,7 @@ class TestExportEnvCommand:
         """Test export-env with --include-all flag."""
         run_id = "test_run_003"
         results_dir = project_dir / "results" / run_id
-        
+
         env_data = {
             "timestamp": "2024-01-01T12:00:00",
             "python": {"version": "3.10.0"},
@@ -322,12 +322,12 @@ class TestExportEnvCommand:
             }
         }
         create_run_config(results_dir, env_data)
-        
+
         output_path = project_dir / "all_requirements.txt"
         result = cli_runner.invoke(
             export_env, [run_id, "--output", str(output_path), "--include-all"]
         )
-        
+
         assert result.exit_code == 0
         content = output_path.read_text()
         assert "numpy==1.24.0" in content
@@ -337,7 +337,7 @@ class TestExportEnvCommand:
         """Test export-env exports only critical packages by default."""
         run_id = "test_run_004"
         results_dir = project_dir / "results" / run_id
-        
+
         env_data = {
             "timestamp": "2024-01-01T12:00:00",
             "python": {"version": "3.10.0"},
@@ -347,12 +347,12 @@ class TestExportEnvCommand:
             }
         }
         create_run_config(results_dir, env_data)
-        
+
         output_path = project_dir / "critical_requirements.txt"
         result = cli_runner.invoke(
             export_env, [run_id, "--output", str(output_path)]
         )
-        
+
         assert result.exit_code == 0
         content = output_path.read_text()
         assert "numpy==1.24.0" in content
@@ -361,7 +361,7 @@ class TestExportEnvCommand:
     def test_export_env_run_not_found(self, cli_runner, project_dir):
         """Test export-env with non-existent run ID."""
         result = cli_runner.invoke(export_env, ["nonexistent_run"])
-        
+
         assert "Error: Run configuration not found" in result.output
 
     def test_export_env_no_environment_data(self, cli_runner, project_dir):
@@ -369,12 +369,12 @@ class TestExportEnvCommand:
         run_id = "test_run_005"
         results_dir = project_dir / "results" / run_id
         results_dir.mkdir(parents=True)
-        
+
         config_path = results_dir / "run_config.json"
         config_path.write_text(json.dumps({"experiment_groups": []}))
-        
+
         result = cli_runner.invoke(export_env, [run_id])
-        
+
         assert "No environment information found" in result.output
 
 
@@ -382,6 +382,8 @@ class TestExportEnvCommand:
 # Check-Env Command Tests
 # =============================================================================
 
+
+@pytest.mark.integration
 class TestCheckEnvCommand:
     """Tests for the 'brisk check-env' command."""
 
@@ -397,10 +399,10 @@ class TestCheckEnvCommand:
             "numpy": "1.24.0",
             "pandas": "2.0.0",
         }
-        
+
         run_id = "test_run_006"
         results_dir = project_dir / "results" / run_id
-        
+
         env_data = {
             "python": {"version": "3.10.0"},
             "packages": {
@@ -409,9 +411,9 @@ class TestCheckEnvCommand:
             }
         }
         create_run_config(results_dir, env_data)
-        
+
         result = cli_runner.invoke(check_env, [run_id])
-        
+
         assert result.exit_code == 0
         assert "compatible" in result.output.lower()
 
@@ -427,10 +429,10 @@ class TestCheckEnvCommand:
             "numpy": "2.0.0",  # Major version change
             "pandas": "2.0.0",
         }
-        
+
         run_id = "test_run_007"
         results_dir = project_dir / "results" / run_id
-        
+
         env_data = {
             "python": {"version": "3.10.0"},
             "packages": {
@@ -439,9 +441,9 @@ class TestCheckEnvCommand:
             }
         }
         create_run_config(results_dir, env_data)
-        
+
         result = cli_runner.invoke(check_env, [run_id])
-        
+
         assert result.exit_code == 0
         assert "critical differences" in result.output.lower()
 
@@ -457,10 +459,10 @@ class TestCheckEnvCommand:
             "pandas": "2.0.0",
             # numpy is missing
         }
-        
+
         run_id = "test_run_008"
         results_dir = project_dir / "results" / run_id
-        
+
         env_data = {
             "python": {"version": "3.10.0"},
             "packages": {
@@ -469,9 +471,9 @@ class TestCheckEnvCommand:
             }
         }
         create_run_config(results_dir, env_data)
-        
+
         result = cli_runner.invoke(check_env, [run_id])
-        
+
         assert result.exit_code == 0
         assert "critical differences" in result.output.lower()
 
@@ -486,10 +488,10 @@ class TestCheckEnvCommand:
         mock_packages.return_value = {
             "numpy": "1.24.0",
         }
-        
+
         run_id = "test_run_009"
         results_dir = project_dir / "results" / run_id
-        
+
         env_data = {
             "python": {"version": "3.10.0"},
             "system": {"platform": "Linux-5.15.0"},
@@ -498,9 +500,9 @@ class TestCheckEnvCommand:
             }
         }
         create_run_config(results_dir, env_data)
-        
+
         result = cli_runner.invoke(check_env, [run_id, "--verbose"])
-        
+
         assert result.exit_code == 0
         assert "ENVIRONMENT COMPATIBILITY REPORT" in result.output
         assert "Python Version" in result.output
@@ -508,7 +510,7 @@ class TestCheckEnvCommand:
     def test_check_env_run_not_found(self, cli_runner, project_dir):
         """Test check-env with non-existent run ID."""
         result = cli_runner.invoke(check_env, ["nonexistent_run"])
-        
+
         assert "Error: Run configuration not found" in result.output
 
     def test_check_env_no_environment_data(self, cli_runner, project_dir):
@@ -516,12 +518,12 @@ class TestCheckEnvCommand:
         run_id = "test_run_010"
         results_dir = project_dir / "results" / run_id
         results_dir.mkdir(parents=True)
-        
+
         config_path = results_dir / "run_config.json"
         config_path.write_text(json.dumps({"experiment_groups": []}))
-        
+
         result = cli_runner.invoke(check_env, [run_id])
-        
+
         assert "No environment information found" in result.output
 
 
@@ -529,9 +531,11 @@ class TestCheckEnvCommand:
 # Environment Commands Integration Tests
 # =============================================================================
 
+
+@pytest.mark.integration
 class TestEnvironmentCommandsIntegration:
     """Integration tests ensuring export-env and check-env work together.
-    
+
     These tests verify that:
     1. When environments match, check-env passes
     2. When environments differ, check-env detects the differences
@@ -552,10 +556,10 @@ class TestEnvironmentCommandsIntegration:
             "pandas": "2.0.0",
             "scikit-learn": "1.3.0",
         }
-        
+
         run_id = "matching_env_test"
         results_dir = project_dir / "results" / run_id
-        
+
         # Save environment that matches current
         env_data = {
             "timestamp": "2024-01-01T12:00:00",
@@ -567,10 +571,10 @@ class TestEnvironmentCommandsIntegration:
             }
         }
         create_run_config(results_dir, env_data)
-        
+
         # Check-env should report compatible
         result = cli_runner.invoke(check_env, [run_id])
-        
+
         assert result.exit_code == 0
         assert "compatible" in result.output.lower()
         assert "critical differences" not in result.output.lower()
@@ -589,10 +593,10 @@ class TestEnvironmentCommandsIntegration:
             "pandas": "2.1.0",  # Different minor version (critical)
             "scikit-learn": "1.3.0",
         }
-        
+
         run_id = "different_env_test"
         results_dir = project_dir / "results" / run_id
-        
+
         env_data = {
             "timestamp": "2024-01-01T12:00:00",
             "python": {"version": "3.10.0"},
@@ -603,10 +607,10 @@ class TestEnvironmentCommandsIntegration:
             }
         }
         create_run_config(results_dir, env_data)
-        
+
         # Check-env should report differences
         result = cli_runner.invoke(check_env, [run_id])
-        
+
         assert result.exit_code == 0
         assert "critical differences" in result.output.lower()
 
@@ -621,10 +625,10 @@ class TestEnvironmentCommandsIntegration:
         mock_packages.return_value = {
             "numpy": "1.24.0",
         }
-        
+
         run_id = "python_mismatch_test"
         results_dir = project_dir / "results" / run_id
-        
+
         env_data = {
             "timestamp": "2024-01-01T12:00:00",
             "python": {"version": "3.10.0"},  # Saved as 3.10
@@ -633,9 +637,9 @@ class TestEnvironmentCommandsIntegration:
             }
         }
         create_run_config(results_dir, env_data)
-        
+
         result = cli_runner.invoke(check_env, [run_id])
-        
+
         assert result.exit_code == 0
         assert "critical differences" in result.output.lower()
 
@@ -651,10 +655,10 @@ class TestEnvironmentCommandsIntegration:
             "numpy": "1.24.0",
             "pandas": "2.0.0",
         }
-        
+
         run_id = "workflow_test"
         results_dir = project_dir / "results" / run_id
-        
+
         env_data = {
             "timestamp": "2024-01-01T12:00:00",
             "python": {"version": "3.10.0"},
@@ -664,24 +668,24 @@ class TestEnvironmentCommandsIntegration:
             }
         }
         create_run_config(results_dir, env_data)
-        
+
         # Step 1: Export requirements
         output_path = project_dir / "requirements.txt"
         export_result = cli_runner.invoke(
             export_env, [run_id, "--output", str(output_path)]
         )
-        
+
         assert export_result.exit_code == 0
         assert output_path.exists()
-        
+
         # Verify requirements content
         requirements_content = output_path.read_text()
         assert "numpy==1.24.0" in requirements_content
         assert "pandas==2.0.0" in requirements_content
-        
+
         # Step 2: Check environment - should be compatible
         check_result = cli_runner.invoke(check_env, [run_id])
-        
+
         assert check_result.exit_code == 0
         assert "compatible" in check_result.output.lower()
 
@@ -697,10 +701,10 @@ class TestEnvironmentCommandsIntegration:
             "numpy": "1.24.3",  # Patch difference
             "pandas": "2.0.1",  # Patch difference
         }
-        
+
         run_id = "patch_version_test"
         results_dir = project_dir / "results" / run_id
-        
+
         env_data = {
             "timestamp": "2024-01-01T12:00:00",
             "python": {"version": "3.10.0"},
@@ -710,9 +714,9 @@ class TestEnvironmentCommandsIntegration:
             }
         }
         create_run_config(results_dir, env_data)
-        
+
         result = cli_runner.invoke(check_env, [run_id])
-        
+
         assert result.exit_code == 0
         # Patch differences should be compatible
         assert "compatible" in result.output.lower()
@@ -730,10 +734,10 @@ class TestEnvironmentCommandsIntegration:
             "pandas": "2.0.0",
             "matplotlib": "3.8.0",  # Extra package
         }
-        
+
         run_id = "extra_packages_test"
         results_dir = project_dir / "results" / run_id
-        
+
         env_data = {
             "timestamp": "2024-01-01T12:00:00",
             "python": {"version": "3.10.0"},
@@ -743,9 +747,9 @@ class TestEnvironmentCommandsIntegration:
             }
         }
         create_run_config(results_dir, env_data)
-        
+
         result = cli_runner.invoke(check_env, [run_id])
-        
+
         assert result.exit_code == 0
         # Extra packages should still be compatible
         assert "compatible" in result.output.lower()
@@ -762,10 +766,10 @@ class TestEnvironmentCommandsIntegration:
             "numpy": "1.24.0",
             # requests is missing
         }
-        
+
         run_id = "missing_non_critical_test"
         results_dir = project_dir / "results" / run_id
-        
+
         env_data = {
             "timestamp": "2024-01-01T12:00:00",
             "python": {"version": "3.10.0"},
@@ -775,9 +779,9 @@ class TestEnvironmentCommandsIntegration:
             }
         }
         create_run_config(results_dir, env_data)
-        
+
         result = cli_runner.invoke(check_env, [run_id])
-        
+
         assert result.exit_code == 0
         # Missing packages should break compatibility
         assert "critical differences" in result.output.lower()
@@ -796,10 +800,10 @@ class TestEnvironmentCommandsIntegration:
             "numpy": "2.0.0",  # Version changed
             "pandas": "2.0.0",
         }
-        
+
         run_id = "verbose_report_test"
         results_dir = project_dir / "results" / run_id
-        
+
         env_data = {
             "timestamp": "2024-01-01T12:00:00",
             "python": {"version": "3.10.0"},
@@ -810,17 +814,17 @@ class TestEnvironmentCommandsIntegration:
             }
         }
         create_run_config(results_dir, env_data)
-        
+
         result = cli_runner.invoke(check_env, [run_id, "--verbose"])
-        
+
         assert result.exit_code == 0
         output = result.output
-        
+
         # Verify report structure
         assert "ENVIRONMENT COMPATIBILITY REPORT" in output
         assert "Python Version" in output
         assert "3.10.0" in output
-        
+
         # Should show the numpy version difference
         assert "numpy" in output.lower()
         assert "RECOMMENDATION" in output

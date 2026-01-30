@@ -23,7 +23,7 @@ def fake_metric(
 ) -> float:
     """Custom metric that uses split_metadata for testing."""
     return np.mean(
-        (y_true - y_pred) / 
+        (y_true - y_pred) /
         (split_metadata["num_features"] / split_metadata["num_samples"])
     )
 
@@ -34,7 +34,7 @@ METRIC_CONFIG = brisk.MetricManager(
     brisk.MetricWrapper(
         name="huber_loss",
         func=huber_loss,
-        display_name="Huber Loss", 
+        display_name="Huber Loss",
         greater_is_better=False
     ),
     brisk.MetricWrapper(

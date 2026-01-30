@@ -6,12 +6,17 @@ from brisk.configuration.experiment_factory import ExperimentFactory
 
 from tests.utils.factories import AlgorithmFactory, ExperimentGroupFactory
 
+# pylint: disable=W0621, W0612
+
 @pytest.fixture
 def algo_collection():
     return AlgorithmFactory.collection()
 
 
+@pytest.mark.unit
 class TestExperimentFactory:
+    """Unit tests for the ExperimentFactory class."""
+
     def test_initalization(self, algo_collection):
         categorical_features = {"data.csv": ["country"]}
         factory = ExperimentFactory(algo_collection, categorical_features)
@@ -55,7 +60,7 @@ class TestExperimentFactory:
         factory = ExperimentFactory(algo_collection, {})
         with ProjectRootContext(tmp_path):
             group = ExperimentGroupFactory.with_hyperparam_grid(
-                tmp_path, hyperparam_grid 
+                tmp_path, hyperparam_grid
             )
             experiments = factory.create_experiments(group, 1)
 
@@ -93,4 +98,4 @@ class TestExperimentFactory:
             )
             with pytest.raises(KeyError):
                 experiments = factory.create_experiments(group, 1)
-    
+

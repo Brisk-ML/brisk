@@ -11,6 +11,8 @@ from brisk.data.preprocessing import (
 
 from tests.utils.factories import ExperimentGroupFactory
 
+# pylint: disable=W0621, W0612
+
 @pytest.fixture
 def simple_manager(tmp_path, mock_services):
     with ProjectRootContext(tmp_path):
@@ -18,11 +20,15 @@ def simple_manager(tmp_path, mock_services):
         manager = ConfigurationManager(
             experiment_groups,
             {},
-        ) 
+        )
     manager.set_services(PlotSettings(), mock_services)
     return manager
 
+
+@pytest.mark.unit
 class TestConfigurationManagerUnit:
+    """Unit tests for the ConfigurationManager class."""
+
     def test_initialize(self, tmp_path):
         """Test ConfigurationManager can be initalized with required args."""
         with ProjectRootContext(tmp_path):
@@ -30,7 +36,7 @@ class TestConfigurationManagerUnit:
             manager = ConfigurationManager(
                 experiment_groups,
                 {},
-            ) 
+            )
         assert manager.experiment_groups == experiment_groups
 
     def test_set_services(self, simple_manager):
@@ -59,7 +65,7 @@ class TestConfigurationManagerUnit:
             experiment_groups = [ExperimentGroupFactory.with_data_config(
                 tmp_path, data_config
             )]
-            manager = ConfigurationManager(experiment_groups, {}) 
+            manager = ConfigurationManager(experiment_groups, {})
         manager.set_services(PlotSettings(), mock_services)
         manager.base_data_manager = DataManager()
         data_managers = manager.create_data_managers()
@@ -79,7 +85,7 @@ class TestConfigurationManagerUnit:
             experiment_groups = [ExperimentGroupFactory.with_data_config(
                 tmp_path, data_config
             )]
-            manager = ConfigurationManager(experiment_groups, {}) 
+            manager = ConfigurationManager(experiment_groups, {})
         manager.set_services(PlotSettings(), mock_services)
         manager.base_data_manager = DataManager()
 
@@ -95,9 +101,9 @@ class TestConfigurationManagerUnit:
     ):
         with ProjectRootContext(tmp_path):
             experiment_groups = [ExperimentGroupFactory.with_data_config(
-                tmp_path, {"test_size": 0.6, "split_method": "kfold"} 
+                tmp_path, {"test_size": 0.6, "split_method": "kfold"}
             )]
-            manager = ConfigurationManager(experiment_groups, {}) 
+            manager = ConfigurationManager(experiment_groups, {})
         manager.set_services(PlotSettings(), mock_services)
         manager.base_data_manager = DataManager(n_splits=7)
 
@@ -116,9 +122,9 @@ class TestConfigurationManagerUnit:
         config value overrides the base value."""
         with ProjectRootContext(tmp_path):
             experiment_groups = [ExperimentGroupFactory.with_data_config(
-                tmp_path, {"n_splits": 10} 
+                tmp_path, {"n_splits": 10}
             )]
-            manager = ConfigurationManager(experiment_groups, {}) 
+            manager = ConfigurationManager(experiment_groups, {})
         manager.set_services(PlotSettings(), mock_services)
         manager.base_data_manager = DataManager(n_splits=7)
 
@@ -136,7 +142,7 @@ class TestConfigurationManagerUnit:
                 ExperimentGroupFactory.simple(tmp_path),
                 ExperimentGroupFactory.simple(tmp_path, name="group2")
             ]
-            manager = ConfigurationManager(experiment_groups, {}) 
+            manager = ConfigurationManager(experiment_groups, {})
         manager.set_services(PlotSettings(), mock_services)
         manager.base_data_manager = DataManager()
 
@@ -150,7 +156,7 @@ class TestConfigurationManagerUnit:
     ):
         with ProjectRootContext(tmp_path):
             experiment_groups = [ExperimentGroupFactory.simple(tmp_path)]
-            manager = ConfigurationManager(experiment_groups, {}) 
+            manager = ConfigurationManager(experiment_groups, {})
         manager.set_services(PlotSettings(), mock_services)
 
         with pytest.raises(ValueError):
@@ -166,7 +172,7 @@ class TestConfigurationManagerUnit:
                 experiment_groups, categorical_features
             )
             manager.set_services(PlotSettings(), mock_services)
-            
+
             mock_data_manager = mock.MagicMock()
             manager.data_managers = {"test_group": mock_data_manager}
 
@@ -194,7 +200,7 @@ class TestConfigurationManagerUnit:
                 experiment_groups, categorical_features
             )
             manager.set_services(PlotSettings(), mock_services)
-            
+
             mock_data_manager = mock.MagicMock()
             manager.data_managers = {"test_group": mock_data_manager}
 

@@ -26,19 +26,20 @@ def model():
 def two_models():
     model1 = linear_model.Ridge()
     model1.__setattr__("wrapper_name", "ridge")
-    
+
     model2 = linear_model.LinearRegression()
     model2.__setattr__("wrapper_name", "linear")
-    
+
     return [model1, model2]
 
 
+@pytest.mark.unit
 class TestMetadataService:
     def test_get_model_has_base(self, metadata_service, model):
         """Test that get_model includes base metadata fields."""
         with mock.patch('datetime.datetime') as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "2024-01-15 10:30:45"
-            
+
             metadata = metadata_service.get_model(
                 models=model,
                 method_name="evaluate_model",
@@ -54,10 +55,10 @@ class TestMetadataService:
             method_name="evaluate_model",
             is_test=False
         )
-        
+
         json_str = json.dumps(metadata)
         assert isinstance(json_str, str)
-        
+
         deserialized = json.loads(json_str)
         assert deserialized["type"] == "model"
 
@@ -68,7 +69,7 @@ class TestMetadataService:
             method_name="evaluate_model",
             is_test=True
         )
-        
+
         assert len(metadata["models"]) == 1
         assert metadata["models"]["ridge"] == "Ridge Regression"
 
@@ -79,7 +80,7 @@ class TestMetadataService:
             method_name="compare_models",
             is_test=False
         )
-        
+
         assert len(metadata["models"]) == 2
         assert metadata["models"]["ridge"] == "Ridge Regression"
         assert metadata["models"]["linear"] == "Linear Regression"
@@ -88,13 +89,13 @@ class TestMetadataService:
         """Test that get_dataset includes base metadata fields."""
         with mock.patch('datetime.datetime') as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "2024-01-15 10:30:45"
-            
+
             metadata = metadata_service.get_dataset(
                 method_name="analyze_dataset",
                 dataset_name="iris",
                 group_name="classification"
             )
-            
+
             assert metadata["timestamp"] == "2024-01-15 10:30:45"
             assert metadata["method"] == "analyze_dataset"
 
@@ -105,10 +106,10 @@ class TestMetadataService:
             dataset_name="iris",
             group_name="classification"
         )
-        
+
         json_str = json.dumps(metadata)
         assert isinstance(json_str, str)
-        
+
         deserialized = json.loads(json_str)
         assert deserialized["type"] == "dataset"
 
@@ -116,11 +117,11 @@ class TestMetadataService:
         """Test that get_rerun includes base metadata fields."""
         with mock.patch('datetime.datetime') as mock_datetime:
             mock_datetime.now.return_value.strftime.return_value = "2024-01-15 10:30:45"
-            
+
             metadata = metadata_service.get_rerun(
                 method_name="save_rerun_config"
             )
-            
+
             assert metadata["timestamp"] == "2024-01-15 10:30:45"
             assert metadata["method"] == "save_rerun_config"
 
@@ -129,9 +130,9 @@ class TestMetadataService:
         metadata = metadata_service.get_rerun(
             method_name="save_rerun_config"
         )
-        
+
         json_str = json.dumps(metadata)
         assert isinstance(json_str, str)
-        
+
         deserialized = json.loads(json_str)
         assert deserialized["type"] == "rerun_config"

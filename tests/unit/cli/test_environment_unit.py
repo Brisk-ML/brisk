@@ -3,9 +3,7 @@
 This module tests the EnvironmentManager class and related data structures
 for capturing, comparing, and exporting Python environments.
 """
-import pathlib
 from unittest.mock import patch, MagicMock
-import platform
 
 import pytest
 
@@ -15,11 +13,9 @@ from brisk.cli.environment import (
     EnvironmentManager,
 )
 
+# pylint: disable=W0212
 
-# =============================================================================
-# VersionMatch Enum Tests
-# =============================================================================
-
+@pytest.mark.unit
 class TestVersionMatch:
     """Tests for the VersionMatch enumeration."""
 
@@ -41,6 +37,8 @@ class TestVersionMatch:
 # EnvironmentDiff Tests
 # =============================================================================
 
+
+@pytest.mark.unit
 class TestEnvironmentDiff:
     """Tests for the EnvironmentDiff dataclass."""
 
@@ -149,6 +147,8 @@ class TestEnvironmentDiff:
 # EnvironmentManager Tests
 # =============================================================================
 
+
+@pytest.mark.unit
 class TestEnvironmentManager:
     """Tests for the EnvironmentManager class."""
 

@@ -1,11 +1,16 @@
 """Integration tests for AlgorithmWrapper."""
 import json
 
+import pytest
 from sklearn import linear_model
 
 from brisk.configuration import algorithm_wrapper
 
+
+@pytest.mark.integration
 class TestAlgorithmWrapperIntegration():
+    """Integration tests for the AlgorithmWrapper class."""
+
     def test_export_config_serializable(self):
         wrapper = algorithm_wrapper.AlgorithmWrapper(
             name="test_wrapper",

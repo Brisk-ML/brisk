@@ -11,7 +11,10 @@ from brisk import services
 from tests.utils.factories import ExperimentGroupFactory, AlgorithmFactory
 
 
+@pytest.mark.integration
 class TestConfigurationManagerIntegration:
+    """Integration tests for the ConfigurationManager class."""
+
     def test_create_experiment_queue_missing_workflow(self, tmp_path):
         with project.ProjectRootContext(tmp_path):
             experiment_groups = [ExperimentGroupFactory.simple(
@@ -21,7 +24,7 @@ class TestConfigurationManagerIntegration:
             manager = configuration_manager.ConfigurationManager(
                 experiment_groups,
                 {},
-            ) 
+            )
             services.initialize_services(tmp_path)
             manager.set_services(plot_settings.PlotSettings())
             manager.algorithm_config = AlgorithmFactory.collection()
@@ -39,7 +42,7 @@ class TestConfigurationManagerIntegration:
             manager = configuration_manager.ConfigurationManager(
                 experiment_groups,
                 {},
-            ) 
+            )
             services.initialize_services(tmp_path)
             manager.set_services(plot_settings.PlotSettings(), mock.Mock())
             manager.algorithm_config = AlgorithmFactory.collection()
@@ -57,7 +60,7 @@ class TestConfigurationManagerIntegration:
             manager = configuration_manager.ConfigurationManager(
                 experiment_groups,
                 {},
-            ) 
+            )
             services.initialize_services(tmp_path)
             manager.set_services(plot_settings.PlotSettings(), mock.Mock())
             manager.algorithm_config = AlgorithmFactory.collection()
@@ -75,7 +78,7 @@ class TestConfigurationManagerIntegration:
             manager = configuration_manager.ConfigurationManager(
                 experiment_groups,
                 {},
-            ) 
+            )
             services.initialize_services(tmp_path)
             manager.set_services(plot_settings.PlotSettings(), mock.Mock())
             manager.algorithm_config = AlgorithmFactory.collection()

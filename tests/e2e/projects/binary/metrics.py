@@ -23,7 +23,7 @@ def fake_metric(
 ) -> float:
     """Custom metric that uses split_metadata for testing."""
     return np.mean(
-        (y_true - y_pred) / 
+        (y_true - y_pred) /
         (split_metadata["num_features"] / split_metadata["num_samples"])
     )
 

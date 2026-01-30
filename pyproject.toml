@@ -37,7 +37,11 @@ build-backend = "poetry.core.masonry.api"
 brisk = "brisk.cli.cli:cli"
 
 [tool.pytest.ini_options]
-norecursedirs = ["old_suite"]
+markers = [
+    "unit: Unit tests that test individual components in isolation",
+    "integration: Integration tests that test component interactions",
+    "e2e: End-to-end tests that test complete workflows",
+]
 
 [tool.coverage.report]
 exclude_lines = [

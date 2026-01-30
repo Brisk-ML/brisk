@@ -18,6 +18,7 @@ def eval_manager(metric_manager):
     return EvaluationManager(metric_manager)
 
 
+@pytest.mark.unit
 class TestEvaluationManagerUnit:
     def test_init_metric_deep_copy(self, metric_manager):
         evaluation_manager = EvaluationManager(metric_manager)

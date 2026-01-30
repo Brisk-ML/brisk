@@ -194,6 +194,7 @@ class TrainingManager:
             self.services = services
         self.results_dir = self.services.io.results_dir
         self.eval_manager.set_services(self.services)
+        self.eval_manager.initialize_evaluators()
 
     def run_experiments(
         self,

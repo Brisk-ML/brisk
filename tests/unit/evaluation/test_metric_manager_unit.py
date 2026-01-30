@@ -21,6 +21,7 @@ def wrapper_factory(name="custom", abbr="cstm", display_name="Custom Wrapper"):
     )
 
 
+@pytest.mark.unit
 class TestMetricManagerUnit:
     def test_init_no_wrapper(self):
         manager = metric_manager.MetricManager()
@@ -50,21 +51,21 @@ class TestMetricManagerUnit:
             *regression_metrics.REGRESSION_METRICS
         )
         function = manager.get_metric("mean_absolute_error")
-        assert function.func.__name__ == "mean_absolute_error" 
+        assert function.func.__name__ == "mean_absolute_error"
 
     def test_get_metric_by_abbreviation(self):
         manager = metric_manager.MetricManager(
             *regression_metrics.REGRESSION_METRICS
         )
         function = manager.get_metric("MSE")
-        assert function.func.__name__ == "mean_squared_error" 
+        assert function.func.__name__ == "mean_squared_error"
 
     def test_get_metric_by_display_name(self):
         manager = metric_manager.MetricManager(
             *regression_metrics.REGRESSION_METRICS
         )
         function = manager.get_metric("Root Mean Squared Error")
-        assert function.func.__name__ == "root_mean_squared_error" 
+        assert function.func.__name__ == "root_mean_squared_error"
 
     def test_get_metric_missing(self):
         manager = metric_manager.MetricManager(
@@ -97,5 +98,5 @@ class TestMetricManagerUnit:
         manager = metric_manager.MetricManager(wrapper_factory())
         export = manager.export_params()
         assert export[0]["type"] == "custom_metric"
-        assert export[0]["name"] == "custom" 
-        assert export[0]["func_type"] == "local" 
+        assert export[0]["name"] == "custom"
+        assert export[0]["func_type"] == "local"

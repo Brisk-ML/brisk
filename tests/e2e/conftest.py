@@ -14,11 +14,9 @@ from sklearn import linear_model, svm, ensemble
 from sklearn import metrics as sk_metrics
 
 import brisk
+from brisk.configuration import project
 
-
-# =============================================================================
-# Custom Metrics (reused from old suite)
-# =============================================================================
+# pylint: disable=W0621, C0103
 
 def huber_loss(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """Custom Huber loss metric for testing."""
@@ -38,14 +36,9 @@ def fake_metric(
 ) -> float:
     """Custom metric that uses split_metadata for testing."""
     return np.mean(
-        (y_true - y_pred) / 
+        (y_true - y_pred) /
         (split_metadata["num_features"] / split_metadata["num_samples"])
     )
-
-
-# =============================================================================
-# Configuration Factories
-# =============================================================================
 
 def get_metric_config() -> brisk.MetricManager:
     """Create metric configuration with standard and custom metrics."""
@@ -55,29 +48,34 @@ def get_metric_config() -> brisk.MetricManager:
         brisk.MetricWrapper(
             name="huber_loss",
             func=huber_loss,
-            display_name="Huber Loss", 
+            display_name="Huber Loss",
+            greater_is_better=False
         ),
         brisk.MetricWrapper(
             name="fake_metric",
             func=fake_metric,
-            display_name="Fake Metric"
+            display_name="Fake Metric",
+            greater_is_better=False
         ),
         brisk.MetricWrapper(
             name="f1_multiclass",
             func=sk_metrics.f1_score,
             display_name="F1 Score (Multiclass)",
+            greater_is_better=True,
             average="weighted"
         ),
         brisk.MetricWrapper(
             name="precision_multiclass",
             func=sk_metrics.precision_score,
             display_name="Precision (Multiclass)",
+            greater_is_better=True,
             average="micro"
         ),
         brisk.MetricWrapper(
             name="recall_multiclass",
             func=sk_metrics.recall_score,
             display_name="Recall (Multiclass)",
+            greater_is_better=True,
             average="macro"
         ),
     )
@@ -105,7 +103,7 @@ def get_algorithm_config() -> brisk.AlgorithmCollection:
             default_params={"min_samples_split": 10},
             hyperparam_grid={
                 "n_estimators": list(range(20, 160, 20)),
-                "criterion": ["friedman_mse", "absolute_error", 
+                "criterion": ["friedman_mse", "absolute_error",
                               "poisson", "squared_error"],
                 "max_depth": list(range(5, 25, 5)) + [None]
             }
@@ -116,7 +114,7 @@ def get_algorithm_config() -> brisk.AlgorithmCollection:
             algorithm_class=svm.LinearSVC,
             default_params={"max_iter": 10000},
             hyperparam_grid={
-                "C": list(np.arange(1, 30, 0.5)), 
+                "C": list(np.arange(1, 30, 0.5)),
                 "penalty": ["l1", "l2"],
             }
         )
@@ -130,14 +128,14 @@ def get_algorithm_config() -> brisk.AlgorithmCollection:
 # Categorical feature mappings for datasets that require them
 CATEGORICAL_FEATURES: Dict[str, List[str]] = {
     "categorical_features_regression.xlsx": [
-        "categorical_0", "categorical_1", "categorical_2", 
-        "categorical_3", "categorical_4", "categorical_5", 
-        "categorical_6", "categorical_7", "categorical_8", 
+        "categorical_0", "categorical_1", "categorical_2",
+        "categorical_3", "categorical_4", "categorical_5",
+        "categorical_6", "categorical_7", "categorical_8",
         "categorical_9"
     ],
     "categorical_features_binary.xlsx": [
-        "categorical_0", "categorical_1", "categorical_2", 
-        "categorical_3", "categorical_4", "categorical_5", 
+        "categorical_0", "categorical_1", "categorical_2",
+        "categorical_3", "categorical_4", "categorical_5",
         "categorical_6", "categorical_7"
     ],
     "categorical_features_categorical.xlsx": [
@@ -185,37 +183,37 @@ class E2ETestConfig:
     data_format: str  # csv, xlsx, db
     workflow: str  # single, multi
     dataset: Union[str, Tuple[str, str]]  # filename or (filename, table_name)
-    
+
     @property
     def test_id(self) -> str:
         """Generate unique test identifier."""
         return f"{self.problem}_{self.data_format}_{self.workflow}"
-    
+
     @property
     def project_type(self) -> str:
         """Map problem type to project directory name."""
         if self.problem == "multiclass":
             return "classification"
         return self.problem
-    
+
     @property
     def algorithms(self) -> Union[List[str], List[List[str]]]:
         """Get algorithms for this test configuration."""
         return ALGORITHMS_BY_PROBLEM[self.problem][self.workflow]
-    
+
     @property
     def categorical_features(self) -> Optional[Dict]:
         """Get categorical feature configuration if needed."""
         if self.data_format == "csv":
             return None
-        
+
         key = self.dataset if isinstance(self.dataset, tuple) else self.dataset
         if key in CATEGORICAL_FEATURES:
             return {self.dataset: CATEGORICAL_FEATURES[key]}
         return None
 
 
-@dataclass 
+@dataclass
 class RunResult:
     """Result of running a brisk command."""
     returncode: int
@@ -234,7 +232,7 @@ def run_brisk_command(
     config_file: Optional[str] = None
 ) -> RunResult:
     """Execute the brisk run command.
-    
+
     Parameters
     ----------
     project_dir : Path
@@ -243,12 +241,12 @@ def run_brisk_command(
         Name for the results directory.
     config_file : str, optional
         Name of config file for rerun (uses -f flag).
-        
+
     Returns
     -------
     RunResult
         Contains returncode, stdout, stderr, and results_dir path.
-    
+
     Notes
     -----
     The workflow is specified in the project's settings.py file,
@@ -263,12 +261,12 @@ def run_brisk_command(
         env["PYTHONPATH"] = project_root
 
     cmd = ["brisk", "run", "-n", results_name]
-    
+
     if config_file:
         cmd.extend(["-f", config_file])
-    
+
     use_shell = sys.platform == "win32"
-    
+
     result = subprocess.run(
         cmd,
         cwd=str(project_dir),
@@ -278,9 +276,9 @@ def run_brisk_command(
         env=env,
         shell=use_shell
     )
-    
+
     results_dir = project_dir / "results" / results_name
-    
+
     return RunResult(
         returncode=result.returncode,
         stdout=result.stdout,
@@ -291,14 +289,15 @@ def run_brisk_command(
 
 def assert_run_success(result: RunResult, is_rerun: bool = False) -> None:
     """Assert that a brisk run completed successfully.
-    
+
     Parameters
     ----------
     result : RunResult
         The result from run_brisk_command.
     is_rerun : bool, default=False
-        If True, skip the run_config.json check (reruns don't create new configs).
-        
+        If True, skip the run_config.json check (reruns don't create
+        new configs).
+
     Raises
     ------
     AssertionError
@@ -309,21 +308,22 @@ def assert_run_success(result: RunResult, is_rerun: bool = False) -> None:
         f"stdout: {result.stdout}\n"
         f"stderr: {result.stderr}"
     )
-    
+
     assert result.results_dir.exists(), (
         f"Results directory not created: {result.results_dir}"
     )
-    
+
     assert (result.results_dir / "report.html").exists(), (
         f"Report not generated in {result.results_dir}"
     )
-    
-    # run_config.json is only created in capture mode, not in coordinate (rerun) mode
+
+    # run_config.json is only created in capture mode, not in coordinate
+    # (rerun) mode
     if not is_rerun:
         assert (result.results_dir / "run_config.json").exists(), (
             f"Rerun config not saved in {result.results_dir}"
         )
-    
+
     assert "FAILED" not in result.stdout, (
         f"Experiment failures detected in output:\n{result.stdout}"
     )
@@ -331,14 +331,14 @@ def assert_run_success(result: RunResult, is_rerun: bool = False) -> None:
 
 def generate_settings_content(config: E2ETestConfig, workflow_name: str) -> str:
     """Generate settings.py content for a test configuration.
-    
+
     Parameters
     ----------
     config : E2ETestConfig
         The test configuration.
     workflow_name : str
         Name of the workflow file (without .py extension).
-        
+
     Returns
     -------
     str
@@ -356,24 +356,24 @@ def generate_settings_content(config: E2ETestConfig, workflow_name: str) -> str:
             features_str = repr(features)
             items.append(f"        {key_str}: {features_str}")
         cat_features_str = "{\n" + ",\n".join(items) + "\n    }"
-    
+
     # Build algorithms string
     algorithms = config.algorithms
     algo_str = repr(algorithms)
-    
+
     # Build dataset string
     if isinstance(config.dataset, tuple):
         dataset_str = f'[("{config.dataset[0]}", "{config.dataset[1]}")]'
     else:
         dataset_str = f'["{config.dataset}"]'
-    
+
     # Determine preprocessors based on data format
     preprocessors = []
     if config.data_format in ("xlsx", "db"):
         preprocessors.append('CategoricalEncodingPreprocessor(method="onehot")')
     if config.data_format == "csv":
         preprocessors.append('ScalingPreprocessor(method="standard")')
-    
+
     preprocessors_str = ", ".join(preprocessors) if preprocessors else ""
     data_config_str = ""
     if preprocessors_str:
@@ -381,12 +381,12 @@ def generate_settings_content(config: E2ETestConfig, workflow_name: str) -> str:
             data_config={{
                 "preprocessors": [{preprocessors_str}]
             }},"""
-    
+
     return f'''"""Auto-generated settings for e2e test: {config.test_id}"""
 from brisk.configuration.configuration import Configuration
 from brisk.data.preprocessing import (
-    ScalingPreprocessor, 
-    CategoricalEncodingPreprocessor, 
+    ScalingPreprocessor,
+    CategoricalEncodingPreprocessor,
     FeatureSelectionPreprocessor,
     MissingDataPreprocessor
 )
@@ -415,7 +415,7 @@ def setup_project(
     datasets_dir: pathlib.Path
 ) -> pathlib.Path:
     """Set up a test project directory.
-    
+
     Parameters
     ----------
     tmp_path : Path
@@ -428,7 +428,7 @@ def setup_project(
         Path to the e2e/projects directory with templates.
     datasets_dir : Path
         Path to the fixtures/datasets directory.
-        
+
     Returns
     -------
     Path
@@ -438,11 +438,11 @@ def setup_project(
     project_template = projects_dir / config.project_type
     project_dir = tmp_path / config.project_type
     shutil.copytree(project_template, project_dir)
-    
+
     # Create datasets directory and copy required datasets
     project_datasets = project_dir / "datasets"
     project_datasets.mkdir(exist_ok=True)
-    
+
     if isinstance(config.dataset, tuple):
         # Database file - copy the db file
         src = datasets_dir / config.dataset[0]
@@ -453,17 +453,17 @@ def setup_project(
         src = datasets_dir / config.dataset
         dst = project_datasets / config.dataset
         shutil.copy2(src, dst)
-    
+
     # Generate and write settings.py
     settings_content = generate_settings_content(config, workflow_name)
     settings_path = project_dir / "settings.py"
     settings_path.write_text(settings_content)
-    
+
     # Clear any existing results
     results_dir = project_dir / "results"
     if results_dir.exists():
         shutil.rmtree(results_dir)
-    
+
     return project_dir
 
 
@@ -477,7 +477,7 @@ def datasets_dir() -> pathlib.Path:
     return pathlib.Path(__file__).parent.parent / "fixtures" / "datasets"
 
 
-@pytest.fixture(scope="session") 
+@pytest.fixture(scope="session")
 def projects_dir() -> pathlib.Path:
     """Path to the e2e/projects directory with project templates."""
     return pathlib.Path(__file__).parent / "projects"
@@ -487,20 +487,19 @@ def projects_dir() -> pathlib.Path:
 def e2e_project(request, tmp_path, projects_dir, datasets_dir):
     """
     Fixture that sets up a project for e2e testing.
-    
+
     Use with indirect parametrization to pass E2ETestConfig.
     """
     config: E2ETestConfig = request.param
     workflow_name = f"basic_{config.workflow}"
-    
+
     # Clear project root cache
-    from brisk.configuration import project
     project.find_project_root.cache_clear()
-    
+
     project_dir = setup_project(
         tmp_path, config, workflow_name, projects_dir, datasets_dir
     )
-    
+
     yield {
         "project_dir": project_dir,
         "config": config,

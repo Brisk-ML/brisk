@@ -7,7 +7,12 @@ from brisk.configuration.experiment_group import ExperimentGroup
 
 from tests.utils.factories import ExperimentGroupFactory
 
+# pylint: disable=W0612
+
+@pytest.mark.unit
 class TestExperimentGroupUnit:
+    """Unit tests for the ExperimentGroup class."""
+
     def test_initalization(self, tmp_path):
         datasets=["data.csv"]
         ExperimentGroupFactory.create_dataset_files(tmp_path, datasets)
@@ -39,7 +44,7 @@ class TestExperimentGroupUnit:
             assert group.dataset_paths == [(
                 tmp_path / "datasets" / "data.csv", None
             )]
-    
+
     def test_empty_str_name(self, tmp_path):
         datasets=["data.csv"]
         ExperimentGroupFactory.create_dataset_files(tmp_path, datasets)
@@ -50,7 +55,7 @@ class TestExperimentGroupUnit:
                 workflow="test_workflow",
                 algorithms=["ridge", "linear"]
             )
-    
+
     def test_nested_algorithm_none_missing(self, tmp_path):
         """Check algorithms in nested lists are found when verifying config"""
         datasets = ["data.csv"]
@@ -95,7 +100,10 @@ class TestExperimentGroupUnit:
 
     def test_description_wrapped(self, tmp_path):
         datasets = ["data.csv"]
-        description = "This is a very long description that should be wrapped over multiple lines for better readability!"
+        description = (
+            "This is a very long description that should be wrapped "
+            "over multiple lines for better readability!"
+        )
         ExperimentGroupFactory.create_dataset_files(tmp_path, datasets)
         with ProjectRootContext(tmp_path):
             group = ExperimentGroup(

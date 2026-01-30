@@ -12,7 +12,7 @@ class RegressionMulti(Workflow):
         self.save_model(model, "fitted_model")
         self.save_model(model2, "fitted_model2")
         self.compare_models(
-            model, model2, X=X_test, y=y_test, metrics=metrics, 
+            model, model2, X=X_test, y=y_test, metrics=metrics,
             filename="compare"
         )
         self.plot_model_comparison(

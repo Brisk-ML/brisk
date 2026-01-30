@@ -5,13 +5,18 @@ from brisk.configuration.algorithm_collection import AlgorithmCollection
 
 from tests.utils.factories import AlgorithmFactory
 
+# pylint: disable=W0612
+
+@pytest.mark.unit
 class TestAlgorithmCollectionUnit():
+    """Unit tests for the AlgorithmCollection class."""
+
     def test_instantiation_no_algorithm(self):
         collection = AlgorithmCollection()
-        assert collection == []
+        assert not collection
 
     def test_instantiation_one_algorithm(self):
-        wrapper = AlgorithmFactory.simple() 
+        wrapper = AlgorithmFactory.simple()
         collection = AlgorithmCollection(wrapper)
         assert collection == [wrapper]
 
@@ -42,19 +47,19 @@ class TestAlgorithmCollectionUnit():
             collection.append(wrapper2)
 
     def test_list_index(self):
-        wrapper = AlgorithmFactory.simple() 
+        wrapper = AlgorithmFactory.simple()
         collection = AlgorithmCollection(wrapper)
         output = collection[0]
         assert output == wrapper
 
     def test_dict_index(self):
-        wrapper = AlgorithmFactory.simple() 
+        wrapper = AlgorithmFactory.simple()
         collection = AlgorithmCollection(wrapper)
         output = collection["ridge"]
         assert output == wrapper
 
     def test_invalid_list_index(self):
-        wrapper = AlgorithmFactory.simple() 
+        wrapper = AlgorithmFactory.simple()
         collection = AlgorithmCollection(wrapper)
         with pytest.raises(IndexError):
             output = collection[1]

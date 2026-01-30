@@ -272,7 +272,7 @@ class Configuration:
             >>> manager = config.build()
             >>> # manager is ready to execute experiments
         """
-        if not hasattr(self, 'services') or self.services is None:
+        if isinstance(self.services, missing.MissingServices):
             self.set_services()
         self.export_params()
         manager = configuration_manager.ConfigurationManager(

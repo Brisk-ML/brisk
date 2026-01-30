@@ -3,7 +3,10 @@
 import functools
 from typing import Callable
 
+import pytest
+
 from brisk.evaluation import metric_wrapper
+
 
 def custom_metric(y_true, y_pred):
     pass
@@ -17,6 +20,7 @@ def a_third_metric(y_true, y_pred, param1, param2):
     pass
 
 
+@pytest.mark.unit
 class TestMetricWrapperUnit:
     def test_initalization(self):
         wrapper = metric_wrapper.MetricWrapper(
@@ -48,7 +52,7 @@ class TestMetricWrapperUnit:
         )
         assert isinstance(wrapper.scorer, Callable)
         assert isinstance(wrapper._func_with_params, functools.partial)
-        assert wrapper._func_with_params.__name__ == "custom" 
+        assert wrapper._func_with_params.__name__ == "custom"
 
     def test_apply_params_one_param(self):
         wrapper = metric_wrapper.MetricWrapper(
@@ -105,10 +109,10 @@ class TestMetricWrapperUnit:
             display_name="Custom Metric",
             greater_is_better=True,
         )
-        
+
         func1 = wrapper.get_func_with_params()
         func2 = wrapper.get_func_with_params()
-        
+
         assert func1 is not func2
         assert func1 is not wrapper._func_with_params
 

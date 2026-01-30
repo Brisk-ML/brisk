@@ -24,7 +24,7 @@ ALGORITHM_CONFIG = brisk.AlgorithmCollection(
         default_params={"min_samples_split": 10},
         hyperparam_grid={
             "n_estimators": list(range(20, 160, 20)),
-            "criterion": ["friedman_mse", "absolute_error", 
+            "criterion": ["friedman_mse", "absolute_error",
                           "poisson", "squared_error"],
             "max_depth": list(range(5, 25, 5)) + [None]
         }
@@ -35,7 +35,7 @@ ALGORITHM_CONFIG = brisk.AlgorithmCollection(
         algorithm_class=svm.LinearSVC,
         default_params={"max_iter": 10000},
         hyperparam_grid={
-            "C": list(np.arange(1, 30, 0.5)), 
+            "C": list(np.arange(1, 30, 0.5)),
             "penalty": ["l1", "l2"],
         }
     )

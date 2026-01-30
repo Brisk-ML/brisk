@@ -11,7 +11,7 @@ from brisk.training import workflow
 
 class ExampleWorkflow(workflow.Workflow):
     """Concrete implementation of Workflow for testing."""
-    
+
     def workflow(self, X_train, X_test, y_train, y_test, output_dir, feature_names):
         """Simple workflow implementation for testing."""
         pass
@@ -31,7 +31,7 @@ def mock_evaluation_manager():
 def sample_data():
     """Create sample training and test data."""
     np.random.seed(42)
-    
+
     X_train = pd.DataFrame(
         np.random.randn(100, 3),
         columns=['feature_0', 'feature_1', 'feature_2']
@@ -42,7 +42,7 @@ def sample_data():
     )
     y_train = pd.Series(np.random.randn(100), name='target')
     y_test = pd.Series(np.random.randn(30), name='target')
-    
+
     return {
         'X_train': X_train,
         'X_test': X_test,
@@ -67,14 +67,15 @@ def workflow_params(mock_evaluation_manager, sample_data):
     }
 
 
+@pytest.mark.unit
 class TestWorkflow:
     def test_unpack_attributes_one_attribute(self, workflow_params):
         """Test workflow construction with one additional attribute."""
         model = ensemble.RandomForestClassifier()
         workflow_params['workflow_attributes'] = {'model': model}
-        
+
         workflow = ExampleWorkflow(**workflow_params)
-        
+
         assert workflow.model is model
 
     def test_unpack_attributes_two_attributes(self, workflow_params):
@@ -85,19 +86,19 @@ class TestWorkflow:
             'model1': model1,
             'model2': model2
         }
-        
+
         workflow = ExampleWorkflow(**workflow_params)
-        
+
         assert workflow.model1 is model1
         assert workflow.model2 is model2
 
     def test_data_attrs_preserved(self, workflow_params):
         """Test that is_test attributes are properly set on data."""
         workflow = ExampleWorkflow(**workflow_params)
-        
+
         assert workflow.X_train.attrs['is_test'] is False
         assert workflow.y_train.attrs['is_test'] is False
-        
+
         assert workflow.X_test.attrs['is_test'] is True
         assert workflow.y_test.attrs['is_test'] is True
 

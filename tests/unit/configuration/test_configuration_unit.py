@@ -7,7 +7,12 @@ from brisk import Configuration
 from brisk.theme.plot_settings import PlotSettings
 from brisk.configuration.project import ProjectRootContext
 
+# pylint: disable=W0612
+
+@pytest.mark.unit
 class TestConfigurationUnit():
+    """Unit tests for the Configuration class."""
+
     def test_initalize_no_optionals(self):
         """Test Configuration can be created with no optionals"""
         config = Configuration(
@@ -144,7 +149,9 @@ class TestConfigurationUnit():
                     workflow_args = {"this_key_is_missing": True}
                 )
 
-    @mock.patch("brisk.configuration.configuration_manager.ConfigurationManager")
+    @mock.patch(
+        "brisk.configuration.configuration_manager.ConfigurationManager"
+    )
     def test_build_correct_params(self, mock_config_manager, tmp_path):
         """Test we create a ConfigurationManager instance"""
         config = Configuration(
@@ -166,7 +173,9 @@ class TestConfigurationUnit():
         )
         assert result is mock_instance
 
-    @mock.patch("brisk.configuration.configuration_manager.ConfigurationManager")
+    @mock.patch(
+        "brisk.configuration.configuration_manager.ConfigurationManager"
+    )
     def test_build_method_call_order(self, mock_config_manager, tmp_path):
         """Test that build() calls all ConfigurationManager methods in the
         correct sequence.
@@ -178,15 +187,15 @@ class TestConfigurationUnit():
         (tmp_path / "datasets/data.csv").write_text("")
         with ProjectRootContext(tmp_path):
             config.add_experiment_group(name="group1", datasets=["data.csv"])
-        
+
         config.set_services(mock.Mock())
         config.export_params = mock.Mock()
-        
+
         mock_instance = mock.Mock()
         mock_config_manager.return_value = mock_instance
-        
+
         result = config.build()
-        
+
         expected_calls = [
             mock.call.set_services(config.plot_settings),
             mock.call.load_algorithm_config(),
@@ -198,7 +207,7 @@ class TestConfigurationUnit():
             mock.call.get_output_structure(),
             mock.call.create_description_map(),
         ]
-        
+
         mock_instance.assert_has_calls(expected_calls, any_order=False)
 
     def test_convert_dataset_to_tuple_str(self, tmp_path):
@@ -207,13 +216,13 @@ class TestConfigurationUnit():
         (tmp_path / "datasets").mkdir(parents=True, exist_ok=True)
         (tmp_path / "datasets/data1.csv").write_text("")
         (tmp_path / "datasets/data2.csv").write_text("")
-        
+
         with ProjectRootContext(tmp_path):
             config.add_experiment_group(
                 name="group1",
                 datasets=["data1.csv", "data2.csv"]
             )
-        
+
         group = config.experiment_groups[0]
         assert group.datasets == [("data1.csv", None), ("data2.csv", None)]
 
@@ -222,15 +231,16 @@ class TestConfigurationUnit():
         config = Configuration("test_workflow", ["ridge", "rf"])
         (tmp_path / "datasets").mkdir(parents=True, exist_ok=True)
         (tmp_path / "datasets/data.xlsx").write_text("")
-        
+
         with ProjectRootContext(tmp_path):
             config.add_experiment_group(
                 name="group1",
                 datasets=[("data.xlsx", "Sheet1"), ("data.xlsx", "Sheet2")]
             )
-        
+
         group = config.experiment_groups[0]
-        assert group.datasets == [("data.xlsx", "Sheet1"), ("data.xlsx", "Sheet2")]
+        expected = [("data.xlsx", "Sheet1"), ("data.xlsx", "Sheet2")]
+        assert group.datasets == expected
 
     def test_convert_dataset_to_tuple_str_and_tuple(self, tmp_path):
         """Test that mixed string and tuple datasets are handled correctly."""
@@ -239,7 +249,7 @@ class TestConfigurationUnit():
         (tmp_path / "datasets/data1.csv").write_text("")
         (tmp_path / "datasets/data2.xlsx").write_text("")
         (tmp_path / "datasets/data3.csv").write_text("")
-        
+
         with ProjectRootContext(tmp_path):
             config.add_experiment_group(
                 name="group1",
@@ -250,7 +260,7 @@ class TestConfigurationUnit():
                     ("data2.xlsx", "Sheet2")
                 ]
             )
-        
+
         group = config.experiment_groups[0]
         expected = [
             ("data1.csv", None),

@@ -1,5 +1,5 @@
 """Factories to create objects for testing."""
-from typing import Dict, Any, List, Literal, Optional
+from typing import Any, Dict, List, Literal, Optional
 from pathlib import Path
 
 import pandas as pd
@@ -12,6 +12,8 @@ from brisk.configuration.algorithm_collection import AlgorithmCollection
 from brisk.evaluation.metric_manager import MetricManager
 from brisk.evaluation.metric_wrapper import MetricWrapper
 from brisk.data import data_split_info, data_splits, splitkey
+
+# pylint: disable=W0212
 
 class AlgorithmFactory:
     """Factory to create AlgorithmWrapper instances for use in tests."""
@@ -31,9 +33,13 @@ class AlgorithmFactory:
         name: str = "ridge",
         display_name: str = "Ridge Regression",
         algorithm_class=linear_model.Ridge,
-        default_params: Dict[str, Any] = {"alpha": 0.5},
-        hyperparam_grid: Dict[str, Any] = {"alpha": [0.1, 0.5, 1.0]}
+        default_params: Optional[Dict[str, Any]] = None,
+        hyperparam_grid: Optional[Dict[str, Any]] = None
     ):
+        if default_params is None:
+            default_params = {"alpha": 0.5}
+        if hyperparam_grid is None:
+            hyperparam_grid = {"alpha": [0.1, 0.5, 1.0]}
         return AlgorithmWrapper(
             name=name,
             display_name=display_name,
@@ -55,6 +61,8 @@ class AlgorithmFactory:
 
 
 class ExperimentGroupFactory:
+    """Factory to create ExperimentGroup instances for use in tests."""
+
     DEFAULT_NAME = "test_group"
     DEFAULT_DATASETS = ["data.csv"]
     DEFAULT_WORKFLOW = "test_workflow"
@@ -90,7 +98,7 @@ class ExperimentGroupFactory:
             workflow=workflow or cls.DEFAULT_WORKFLOW,
             algorithms=algorithms or cls.DEFAULT_ALGORITHMS
         )
-    
+
     @classmethod
     def with_data_config(
         cls,
@@ -163,10 +171,10 @@ class ExperimentGroupFactory:
 
 class DataFrameFactory:
     """Factory for creating deterministic test datasets.
-    
+
     All methods are idempotent - calling with the same parameters will produce
     identical datasets. Maximum constraints: 10 features, 100 samples.
-    
+
     Parameters
     ----------
     n_samples : int
@@ -188,23 +196,24 @@ class DataFrameFactory:
         Proportion of data for test set in train_test_split (default 0.2)
     random_state : int, optional
         Seed for reproducibility (default 42)
-        
+
     Examples
     --------
     >>> # Simple regression with continuous features
     >>> df = DataFrameFactory.dataframe(
     ...     n_samples=50, n_features=3, problem_type='regression'
     ... )
-    
+
     >>> # Mixed feature types with groups
     >>> df = DataFrameFactory.dataframe(
-    ...     n_samples=80, 
-    ...     n_features=4, 
+    ...     n_samples=80,
+    ...     n_features=4,
     ...     problem_type='binary',
-    ...     feature_types=['continuous', 'continuous', 'categorical', 'categorical'],
+    ...     feature_types=['continuous', 'continuous',
+    ...                    'categorical', 'categorical'],
     ...     add_group=True
     ... )
-    
+
     >>> # Train-test split
     >>> data = DataFrameFactory.train_test_split(
     ...     n_samples=100, n_features=5, problem_type='multiclass'
@@ -219,11 +228,13 @@ class DataFrameFactory:
         n_samples: int,
         n_features: int,
         problem_type: Literal["regression", "binary", "multiclass"],
-        feature_types: Optional[List[Literal["continuous", "categorical"]]] = None,
+        feature_types: Optional[
+            List[Literal["continuous", "categorical"]]
+        ] = None,
         n_categorical_levels: int = 5,
         add_group: bool = False,
         n_groups: int = 3,
-        random_state = 42
+        random_state: int = 42
     ) -> pd.DataFrame:
         """Create a single DataFrame with features and target."""
         cls._validate_params(n_samples, n_features, feature_types)
@@ -258,7 +269,7 @@ class DataFrameFactory:
         elif problem_type == "multiclass":
             data["target"] = np.random.choice([0, 1, 2], size=n_samples)
         else:
-            raise(Valueerror, f"Invalid problem_type: {problem_type}")
+            raise ValueError(f"Invalid problem_type: {problem_type}")
 
         return pd.DataFrame(data)
 
@@ -268,12 +279,14 @@ class DataFrameFactory:
         n_samples: int,
         n_features: int,
         problem_type: Literal["regression", "binary", "multiclass"],
-        feature_types: Optional[List[Literal["continuous", "categorical"]]] = None,
+        feature_types: Optional[
+            List[Literal["continuous", "categorical"]]
+        ] = None,
         n_categorical_levels: int = 5,
         add_group: bool = False,
         n_groups: int = 3,
         test_size: float = 0.2,
-        random_state = 42
+        random_state: int = 42
     ):
         """Creates train-test split DataFrame."""
         df = cls.dataframe(
@@ -296,9 +309,11 @@ class DataFrameFactory:
 
         target_col = "target"
         feature_cols = [col for col in df.columns if col != target_col]
-        
+
         result = {
-            "X_train": df.loc[train_indices, feature_cols].reset_index(drop=True),
+            "X_train": df.loc[train_indices, feature_cols].reset_index(
+                drop=True
+            ),
             "X_test": df.loc[test_indices, feature_cols].reset_index(drop=True),
             "y_train": df.loc[train_indices, target_col].reset_index(drop=True),
             "y_test": df.loc[test_indices, target_col].reset_index(drop=True),
@@ -337,7 +352,8 @@ class DataFrameFactory:
             )
         if n_features > cls.MAX_FEATURES:
             raise ValueError(
-                f"n_features ({n_features}) exceeds maximum ({cls.MAX_FEATURES})"
+                f"n_features ({n_features}) exceeds maximum "
+                f"({cls.MAX_FEATURES})"
             )
         if n_samples < 1:
             raise ValueError("n_samples must be at least 1")
@@ -351,6 +367,8 @@ class DataFrameFactory:
 
 
 class MetricManagerFactory:
+    """Factory to create MetricManager instances for use in tests."""
+
     @classmethod
     def regression(cls):
         return MetricManager(
@@ -407,13 +425,13 @@ class DataSplitInfoFactory:
             n_features=n_features,
             problem_type=problem_type
         )
-        
+
         split_key_obj = splitkey.SplitKey(
             group_name=group_name,
             dataset_name=dataset_name,
             table_name=table_name
         )
-        
+
         return data_split_info.DataSplitInfo(
             X_train=data["X_train"],
             X_test=data["X_test"],
@@ -438,7 +456,7 @@ class DataSplitsFactory:
     ):
         """Create a DataSplits instance with multiple splits."""
         splits = data_splits.DataSplits(n_splits=n_splits)
-        
+
         for i in range(n_splits):
             split_info = DataSplitInfoFactory.simple(
                 split_index=i,
@@ -447,6 +465,6 @@ class DataSplitsFactory:
                 problem_type=problem_type
             )
             splits.add(split_info)
-        
+
         return splits
 

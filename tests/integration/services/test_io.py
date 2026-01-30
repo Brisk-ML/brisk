@@ -15,13 +15,14 @@ from unittest import mock
 from brisk.services import io
 
 
+@pytest.mark.integration
 class TestNumpyEncoder:
     def test_numpy_integer(self):
         """Test encoding numpy integers."""
         data = {"value": np.int64(42)}
         json_str = json.dumps(data, cls=io.NumpyEncoder)
         result = json.loads(json_str)
-        
+
         assert result["value"] == 42
         assert isinstance(result["value"], int)
 
@@ -30,7 +31,7 @@ class TestNumpyEncoder:
         data = {"value": np.float64(3.14)}
         json_str = json.dumps(data, cls=io.NumpyEncoder)
         result = json.loads(json_str)
-        
+
         assert abs(result["value"] - 3.14) < 0.001
         assert isinstance(result["value"], float)
 
@@ -39,7 +40,7 @@ class TestNumpyEncoder:
         data = {"values": np.array([1, 2, 3])}
         json_str = json.dumps(data, cls=io.NumpyEncoder)
         result = json.loads(json_str)
-        
+
         assert result["values"] == [1, 2, 3]
         assert isinstance(result["values"], list)
 
@@ -232,7 +233,7 @@ def io_service(tmp_path, mock_reporting_service, mock_logging_service, mock_reru
     output_dir = tmp_path / "output"
     results_dir.mkdir()
     output_dir.mkdir()
-    
+
     service = io.IOService("test_io", results_dir, output_dir)
     service._other_services = {
         "reporting": mock_reporting_service,
@@ -246,15 +247,17 @@ def io_service(tmp_path, mock_reporting_service, mock_logging_service, mock_reru
 # Test Cases
 # ============================================================================
 
+
+@pytest.mark.integration
 class TestIOService:
     def test_save_to_json_missing_dir(self, io_service, tmp_path):
         """Test save_to_json creates missing directories."""
         output_path = tmp_path / "missing" / "nested" / "data.json"
         data = {"test": "value"}
         metadata = {"type": "test"}
-        
+
         io_service.save_to_json(data, output_path, metadata)
-        
+
         assert output_path.exists()
         with open(output_path) as f:
             saved_data = json.load(f)
@@ -265,12 +268,12 @@ class TestIOService:
         output_dir = tmp_path / "existing"
         output_dir.mkdir()
         output_path = output_dir / "data.json"
-        
+
         data = {"accuracy": 0.95, "precision": 0.92}
         metadata = {"experiment": "exp_1"}
-        
+
         io_service.save_to_json(data, output_path, metadata)
-        
+
         assert output_path.exists()
         with open(output_path) as f:
             saved_data = json.load(f)
@@ -279,12 +282,12 @@ class TestIOService:
     def test_save_plot_missing_dir(self, io_service, tmp_path):
         """Test save_plot creates missing directories."""
         output_path = tmp_path / "missing" / "plots" / "test.png"
-        
+
         plt.figure()
         plt.plot([1, 2, 3], [1, 4, 9])
-        
+
         io_service.save_plot(output_path, metadata={"type": "test"})
-        
+
         assert output_path.exists()
 
     def test_save_plot_dir_exists(self, io_service, tmp_path):
@@ -292,71 +295,71 @@ class TestIOService:
         output_dir = tmp_path / "plots"
         output_dir.mkdir()
         output_path = output_dir / "test.png"
-        
+
         plt.figure()
         plt.plot([1, 2, 3], [1, 4, 9])
-        
+
         io_service.save_plot(output_path, metadata={"type": "test"})
-        
+
         assert output_path.exists()
 
     def test_save_plot_plotnine(self, io_service, tmp_path):
         """Test save_plot with plotnine plot."""
         output_path = tmp_path / "plotnine_plot.png"
-        
+
         df = pd.DataFrame({'x': [1, 2, 3], 'y': [1, 4, 9]})
         plot = (
             pn.ggplot(df, pn.aes('x', 'y')) +
             pn.geom_point()
         )
-        
+
         io_service.save_plot(output_path, plot=plot)
-        
+
         assert output_path.exists()
 
     @pytest.mark.slow
     def test_save_plot_plotly(self, io_service, tmp_path):
         """Test save_plot with plotly figure."""
         output_path = tmp_path / "plotly_plot.png"
-        
+
         fig = go.Figure(data=go.Scatter(x=[1, 2, 3], y=[1, 4, 9]))
-        
+
         io_service.save_plot(output_path, plot=fig)
-        
+
         assert output_path.exists()
 
     def test_save_plot_matplotlib(self, io_service, tmp_path):
         """Test save_plot with matplotlib figure (no plot argument)."""
         output_path = tmp_path / "matplotlib_plot.png"
-        
+
         plt.figure()
         plt.plot([1, 2, 3], [1, 4, 9])
-        
+
         io_service.save_plot(output_path)
-        
+
         assert output_path.exists()
 
     def test_save_plot_seaborn(self, io_service, tmp_path):
         """Test save_plot with seaborn plot (uses matplotlib backend)."""
         output_path = tmp_path / "seaborn_plot.png"
-        
+
         plt.figure()
         sns.lineplot(x=[1, 2, 3], y=[1, 4, 9])
-        
+
         io_service.save_plot(output_path)
-        
+
         assert output_path.exists()
 
     def test_save_plot_svg_conversion_matplotlib(self, io_service, tmp_path):
         """Test SVG conversion for matplotlib plots."""
         output_path = tmp_path / "plot.png"
         metadata = {"type": "test"}
-        
+
         plt.figure()
         plt.plot([1, 2, 3], [1, 4, 9])
-        
+
         io_service.save_plot(output_path, metadata=metadata)
-        
+
         io_service._other_services["reporting"].store_plot_svg.assert_called_once()
         call_args = io_service._other_services["reporting"].store_plot_svg.call_args
         svg_str = call_args[0][0]
@@ -366,15 +369,15 @@ class TestIOService:
         """Test SVG conversion for plotnine plots."""
         output_path = tmp_path / "plot.png"
         metadata = {"type": "test"}
-        
+
         df = pd.DataFrame({'x': [1, 2, 3], 'y': [1, 4, 9]})
         plot = (
             pn.ggplot(df, pn.aes('x', 'y')) +
             pn.geom_point()
         )
-        
+
         io_service.save_plot(output_path, plot=plot, metadata=metadata)
-        
+
         io_service._other_services["reporting"].store_plot_svg.assert_called_once()
         call_args = io_service._other_services["reporting"].store_plot_svg.call_args
         svg_str = call_args[0][0]
@@ -385,11 +388,11 @@ class TestIOService:
         """Test SVG conversion for plotly figures."""
         output_path = tmp_path / "plot.png"
         metadata = {"type": "test"}
-        
+
         fig = go.Figure(data=go.Scatter(x=[1, 2, 3], y=[1, 4, 9]))
-        
+
         io_service.save_plot(output_path, plot=fig, metadata=metadata)
-        
+
         io_service._other_services["reporting"].store_plot_svg.assert_called_once()
         call_args = io_service._other_services["reporting"].store_plot_svg.call_args
         svg_str = call_args[0][0]
@@ -399,12 +402,12 @@ class TestIOService:
         """Test SVG conversion for seaborn plots (matplotlib backend)."""
         output_path = tmp_path / "plot.png"
         metadata = {"type": "test"}
-        
+
         plt.figure()
         sns.lineplot(x=[1, 2, 3], y=[1, 4, 9])
-        
+
         io_service.save_plot(output_path, metadata=metadata)
-        
+
         io_service._other_services["reporting"].store_plot_svg.assert_called_once()
         call_args = io_service._other_services["reporting"].store_plot_svg.call_args
         svg_str = call_args[0][0]
@@ -415,9 +418,9 @@ class TestIOService:
         output_path = tmp_path / "missing" / "config" / "rerun.json"
         data = {"config": "value"}
         metadata = {"type": "rerun"}
-        
+
         io_service.save_rerun_config(data, metadata, output_path)
-        
+
         assert output_path.exists()
         with open(output_path) as f:
             saved_data = json.load(f)
@@ -428,12 +431,12 @@ class TestIOService:
         output_dir = tmp_path / "config"
         output_dir.mkdir()
         output_path = output_dir / "rerun.json"
-        
+
         data = {"settings": "test"}
         metadata = {"timestamp": "2024-01-15"}
-        
+
         io_service.save_rerun_config(data, metadata, output_path)
-        
+
         assert output_path.exists()
         with open(output_path) as f:
             saved_data = json.load(f)
@@ -461,20 +464,20 @@ class TestIOService:
 TEST_OBJECT = "test_value"
 TEST_NUMBER = 42
 """)
-        
+
         obj = io.IOService.load_module_object(
             str(fixtures_dir),
             "test_module.py",
             "TEST_OBJECT",
             required=True
         )
-        
+
         assert obj == "test_value"
 
     def test_load_custom_evaluators_missing_file(self, io_service, tmp_path):
         """Test load_custom_evaluators with missing file."""
         missing_file = tmp_path / "missing_evaluators.py"
-        
+
         with pytest.raises(FileNotFoundError):
             io_service.load_custom_evaluators(missing_file)
 
@@ -482,9 +485,9 @@ TEST_NUMBER = 42
         """Test load_custom_evaluators when file lacks register function."""
         eval_file = fixtures_dir / "bad_evaluators.py"
         eval_file.write_text("# No register function here")
-        
+
         result = io_service.load_custom_evaluators(eval_file)
-        
+
         io_service._other_services["logging"].logger.warning.assert_called()
 
     def test_load_custom_evaluators_calls_rerun(self, io_service, evaluators_file):
@@ -495,7 +498,7 @@ TEST_NUMBER = 42
     def test_load_base_data_manager_missing_file(self, io_service, tmp_path):
         """Test load_base_data_manager with missing file."""
         missing_file = tmp_path / "missing_data.py"
-        
+
         with pytest.raises(FileNotFoundError):
             io_service.load_base_data_manager(missing_file)
 
@@ -503,7 +506,7 @@ TEST_NUMBER = 42
         """Test load_base_data_manager when BASE_DATA_MANAGER is missing."""
         data_file = fixtures_dir / "bad_data.py"
         data_file.write_text("# No BASE_DATA_MANAGER here")
-        
+
         with pytest.raises(ImportError):
             io_service.load_base_data_manager(data_file)
 
@@ -523,7 +526,7 @@ TEST_NUMBER = 42
         """Test load_algorithms when ALGORITHM_CONFIG is missing."""
         algo_file = fixtures_dir / "bad_algorithms.py"
         algo_file.write_text("# No ALGORITHM_CONFIG here")
-        
+
         with pytest.raises(ImportError):
             io_service.load_algorithms(algo_file)
 
@@ -544,13 +547,13 @@ TEST_NUMBER = 42
         workflows_dir = fixtures_dir / "workflows"
         workflows_dir.mkdir()
         (workflows_dir / "__init__.py").write_text("")
-        
+
         workflow_file = workflows_dir / "no_workflow.py"
         workflow_file.write_text("# No Workflow class here")
         original_path = sys.path.copy()
         try:
             sys.path.insert(0, str(fixtures_dir))
-            
+
             with pytest.raises(ImportError):
                 io_service.load_workflow("no_workflow")
         finally:
@@ -570,7 +573,7 @@ class WorkflowTwo(Workflow):
     def run(self):
         pass
 """)
-        
+
         with mock.patch('sys.path', [str(fixtures_dir)] + list(sys.path)):
             with pytest.raises(ImportError):
                 io_service.load_workflow("multi_workflow")
@@ -578,7 +581,7 @@ class WorkflowTwo(Workflow):
     def test_load_metric_config_missing_file(self, io_service, tmp_path):
         """Test load_metric_config with missing file."""
         missing_file = tmp_path / "missing_metrics.py"
-        
+
         with pytest.raises(FileNotFoundError):
             io_service.load_metric_config(missing_file)
 
@@ -586,7 +589,7 @@ class WorkflowTwo(Workflow):
         """Test load_metric_config when METRIC_CONFIG is missing."""
         metric_file = fixtures_dir / "bad_metrics.py"
         metric_file.write_text("# No METRIC_CONFIG here")
-        
+
         with pytest.raises(ImportError):
             io_service.load_metric_config(metric_file)
 

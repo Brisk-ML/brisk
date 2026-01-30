@@ -8,6 +8,8 @@ from brisk.data.preprocessing import (
     ScalingPreprocessor, MissingDataPreprocessor
 )
 
+
+@pytest.mark.unit
 class TestDataManagerUnit:
     def test_initalization(self):
         manager = DataManager(
@@ -196,10 +198,10 @@ class TestDataManagerUnit:
             preprocessors=None
         )
         json = manager.export_params()
-        
+
         input_params["preprocessors"] = {}
         assert json == {"params": input_params}
-        
+
     def test_export_params_one_preprocessor(self):
         input_params = {
             "test_size":0.3,
@@ -238,7 +240,7 @@ class TestDataManagerUnit:
                 MissingDataPreprocessor(
                     strategy="drop_rows",
                     impute_method="mean",
-                    constant_value=1 
+                    constant_value=1
                 )
             ]
         )
