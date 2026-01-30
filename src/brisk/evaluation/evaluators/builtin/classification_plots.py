@@ -94,7 +94,8 @@ class PlotConfusionHeatmap(plot_evaluator.PlotEvaluator):
         """
         prediction = self._generate_prediction(model, X)
         plot_data = self.generate_plot_data(prediction, y)
-        plot = self._create_plot(plot_data, model.display_name)
+        wrapper = self.utility.get_algo_wrapper(model.wrapper_name)
+        plot = self._create_plot(plot_data, wrapper.display_name)
         metadata = self._generate_metadata(model, X.attrs["is_test"])
         self._save_plot(filename, metadata, plot=plot)
         self.log_results("Confusion Matrix Heatmap", filename)
@@ -572,12 +573,12 @@ class PlotPrecisionRecallCurve(plot_evaluator.PlotEvaluator):
         The plot includes both the precision-recall curve and a reference
         line showing the average precision score.
         """
-        plot_data, ap_score = self._generate_plot_data(model, X, y, pos_label)
+        plot_data, ap_score = self.generate_plot_data(model, X, y, pos_label)
         wrapper = self.utility.get_algo_wrapper(model.wrapper_name)
         plot = self._create_plot(plot_data, wrapper)
         metadata = self._generate_metadata(model, X.attrs["is_test"])
         self._save_plot(filename, metadata, plot=plot)
-        self._log_results("Precision-Recall Curve", ap_score, filename)
+        self.log_results("Precision-Recall Curve", ap_score, filename)
 
     def generate_plot_data(
         self,

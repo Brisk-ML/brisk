@@ -272,6 +272,8 @@ class Configuration:
             >>> manager = config.build()
             >>> # manager is ready to execute experiments
         """
+        if not hasattr(self, 'services') or self.services is None:
+            self.set_services()
         self.export_params()
         manager = configuration_manager.ConfigurationManager(
             self.experiment_groups, self.categorical_features

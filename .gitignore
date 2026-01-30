@@ -7,6 +7,7 @@ old_suite/*
 *.ods#
 
 *.csv
+!tests/fixtures/datasets/*.csv
 !tests/e2e/datasets/*.csv
 !tests/unit_tests/utility/result_structure_test/datasets/mixed_features_regression.csv
 !tests/unit_tests/utility/result_structure_test/results/result_structure_test/error_log.txt

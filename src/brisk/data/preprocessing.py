@@ -1681,12 +1681,24 @@ class FeatureSelectionPreprocessor(BasePreprocessor):
         suitable for JSON serialization. Note that complex objects like
         estimators may not be directly serializable.
         """
+        # Convert estimators to string representation for JSON serialization
+        estimator_str = (
+            type(self.estimator).__name__ if self.estimator else None
+        )
+        fs_estimator_str = (
+            type(self.feature_selection_estimator).__name__
+            if self.feature_selection_estimator else None
+        )
+        algo_config_str = (
+            str(self.algorithm_config) if self.algorithm_config else None
+        )
+        
         return {
             "method": self.method,
             "n_features_to_select": self.n_features_to_select,
             "feature_selection_cv": self.feature_selection_cv,
-            "estimator": self.estimator,
-            "algorithm_config": self.algorithm_config,
-            "feature_selection_estimator": self.feature_selection_estimator,
+            "estimator": estimator_str,
+            "algorithm_config": algo_config_str,
+            "feature_selection_estimator": fs_estimator_str,
             "problem_type": self.problem_type
         }

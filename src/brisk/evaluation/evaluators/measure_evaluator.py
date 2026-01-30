@@ -115,10 +115,10 @@ class MeasureEvaluator(base_eval.BaseEvaluator):
         _calculate_measures method, which must be implemented by subclasses.
         """
         predictions = self._generate_prediction(model, X)
-        results = self._calculate_measures(predictions, y, metrics)
+        results = self.calculate_measures(predictions, y, metrics)
         metadata = self._generate_metadata(model, X.attrs["is_test"])
         self._save_json(results, filename, metadata)
-        self._log_results(results, filename)
+        self.log_results(results, filename)
 
     def _save_json(
         self,

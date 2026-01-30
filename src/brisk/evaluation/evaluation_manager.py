@@ -303,6 +303,7 @@ class EvaluationManager:
         configuration, making it ready for use in evaluation operations.
         """
         evaluator = self.registry.get(name)
+        evaluator.set_services(self.services)
         evaluator.set_metric_config(self.metric_manager)
         return evaluator
 

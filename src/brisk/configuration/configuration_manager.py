@@ -159,8 +159,11 @@ class ConfigurationManager:
         group-specific data managers with custom parameters.
         """
         data_file = self.project_root / "data.py"
-        base_data_manager = self.services.io.load_base_data_manager(data_file)
-        return base_data_manager
+        self.base_data_manager = self.services.io.load_base_data_manager(
+            data_file
+        )
+        self.base_data_manager.set_services(self.services)
+        return self.base_data_manager
 
     def load_algorithm_config(self) -> algorithm_collection.AlgorithmCollection:
         """Load algorithm configuration from project's algorithms.py.
@@ -190,8 +193,8 @@ class ConfigurationManager:
         experiment instances with the appropriate algorithms.
         """
         algo_file = self.project_root / "algorithms.py"
-        algo_config = self.services.io.load_algorithms(algo_file)
-        return algo_config
+        self.algorithm_config = self.services.io.load_algorithms(algo_file)
+        return self.algorithm_config
 
     def _get_base_params(self) -> Dict:
         """Get parameters from base DataManager instance.
@@ -279,12 +282,14 @@ class ConfigurationManager:
                 base_params = self._get_base_params()
                 base_params.update(first_group.data_config)
                 manager = data_manager.DataManager(**base_params)
+                manager.set_services(self.services)
 
             for name in group_names:
                 self.services.reporting.add_data_manager(name, manager)
                 managers[name] = manager
 
-        return managers
+        self.data_managers = managers
+        return self.data_managers
 
     def create_experiment_queue(self) -> collections.deque:
         """Create queue of experiments from all ExperimentGroups.
@@ -325,7 +330,8 @@ class ConfigurationManager:
             experiments = factory.create_experiments(group, n_splits)
             all_experiments.extend(experiments)
 
-        return all_experiments
+        self.experiment_queue = all_experiments
+        return self.experiment_queue
 
     def create_data_splits(self) -> None:
         """Create DataSplitInfo instances for all datasets.
@@ -491,7 +497,8 @@ class ConfigurationManager:
 
             output_structure[group.name] = dataset_info
 
-        return output_structure
+        self.output_structure = output_structure
+        return self.output_structure
 
     def create_description_map(self) -> Dict[str, str]:
         """Create a mapping of group names to descriptions.
@@ -512,8 +519,9 @@ class ConfigurationManager:
         filtered out to avoid cluttering the output with meaningless
         entries.
         """
-        return {
+        self.description_map = {
             group.name: group.description
             for group in self.experiment_groups
             if group.description != ""
         }
+        return self.description_map

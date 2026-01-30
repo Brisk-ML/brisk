@@ -193,6 +193,7 @@ class TrainingManager:
         else:
             self.services = services
         self.results_dir = self.services.io.results_dir
+        self.eval_manager.set_services(self.services)
 
     def run_experiments(
         self,
@@ -522,10 +523,11 @@ class TrainingManager:
             current_experiment.split_index, experiment_name
         )
 
-        self.eval_manager.set_experiment_values(
-            experiment_dir, data_split.get_split_metadata(),
+        self.eval_manager.set_output_dir(experiment_dir)
+        self.eval_manager.set_experiment_config(
             data_split.group_index_train, data_split.group_index_test
         )
+        self.eval_manager.set_evaluator_registry()
 
         workflow_instance = workflow(
             evaluation_manager=self.eval_manager,

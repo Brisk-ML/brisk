@@ -80,6 +80,7 @@ def _run_from_project(
             metric_config=metric_config,
             config_manager=config_manager
         )
+        manager.set_services()
 
         manager.run_experiments(
             create_report=create_report
@@ -155,8 +156,9 @@ def _run_from_config(
         )
 
     for dataset_file, metadata in configs["datasets"].items():
+        actual_file = dataset_file.split("|")[0] if "|" in dataset_file else dataset_file
         dataset_path = os.path.join(
-            project_root, "datasets", dataset_file
+            project_root, "datasets", actual_file
         )
         _validate_dataset(dataset_path, metadata)
 
@@ -188,6 +190,7 @@ def _run_from_config(
 
     config_manager = config.build()
     manager = training_manager.TrainingManager(metric_config, config_manager)
+    manager.set_services()
 
     try:
         manager.run_experiments(create_report)

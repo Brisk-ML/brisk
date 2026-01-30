@@ -649,3 +649,50 @@ class CompareModels(measure_evaluator.MeasureEvaluator):
             "Model comparison results:\n%s\nSaved to '%s'.", 
             comparison_log, output_path
         )
+
+    def report(
+        self,
+        results: Dict[str, Any]
+    ) -> Tuple[List[str], List[List[Any]]]:
+        """Generate a report of the model comparison results.
+
+        Converts model comparison results into a tabular format suitable
+        for reporting, with models as columns and metrics as rows.
+
+        Parameters
+        ----------
+        results : Dict[str, Any]
+            The results of the model comparison
+
+        Returns
+        -------
+        Tuple[List[str], List[List[Any]]]
+            A tuple containing:
+            - List of column headers: ["Metric", model1_name, model2_name, ...]
+            - Nested list of rows with metric names and scores for each model
+        """
+        # Get model names (exclude _metadata and differences)
+        model_names = [
+            key for key in results.keys()
+            if key not in ["_metadata", "differences"]
+        ]
+        
+        if not model_names:
+            return ["Metric"], []
+        
+        # Get metric names from first model
+        first_model = model_names[0]
+        metric_names = list(results[first_model].keys())
+        
+        columns = ["Metric"] + model_names
+        rows = []
+        
+        for metric in metric_names:
+            row = [metric]
+            for model_name in model_names:
+                score = results[model_name].get(metric, "N/A")
+                # Convert to string for TableData
+                row.append(str(score) if score != "N/A" else score)
+            rows.append(row)
+        
+        return columns, rows
