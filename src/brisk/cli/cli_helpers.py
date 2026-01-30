@@ -151,7 +151,7 @@ def _run_from_config(
     if configs["package_version"] != version.__version__:
         raise RuntimeError(
             "Configuration file was created using Brisk version "
-            f"{configs["package_version"]} but Brisk version "
+            f"{configs['package_version']} but Brisk version "
             f"{version.__version__} was detected."
         )
 
@@ -262,19 +262,19 @@ def _validate_dataset(dataset_path: str, metadata: Dict[str, Any]) -> None:
     if rows != metadata["num_samples"]:
         raise ValueError(
             f"Number of rows for {dataset_path} do not match expected rows "
-            f"{metadata["num_samples"]}"
+            f"{metadata['num_samples']}"
         )
     if cols != metadata["num_features"]:
         raise ValueError(
             f"Number of columns for {dataset_path} do not match expected "
-            f"columns {metadata["num_features"]}"
+            f"columns {metadata['num_features']}"
         )
 
     current_features = list(df.columns)
     if current_features.sort() != metadata["feature_names"].sort():
         raise ValueError(
             f"Feature name for {dataset_path} do not match expected features "
-            f"{metadata["feature_names"]}"
+            f"{metadata['feature_names']}"
         )
 
 
