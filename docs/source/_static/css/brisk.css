@@ -14,30 +14,30 @@
     /* Font Family */
     --pst-font-family-base: 'Montserrat', sans-serif;
 
-    /* Celtic Blue (Bright Blue) */
-    --primary-color: #0074D9;
-    --primary-color-dark: #005fb3;
-    --primary-color-light: #80c4ff;
+    /* ---- Brisk Colour Palette ---- */
 
-    /* Federal Blue (Dark Blue) */
-    --secondary-color: #07004D;
-    --secondary-color-dark: #060040;
-    --secondary-color-light: #0e0095;
+    /* Blue */
+    --blue: #3d98f0;
+    --blue-dark: #07315a;
 
-    /* Columbia Blue (Light Blue) */
-    --background-color: #C4E0F9;
-    --background-color-dark: #7DBCF2;
-    --background-color-light: #DAECFB;
+    /* Green */
+    --green: #00a878;
+    --green-dark: #006b4c;
+    --green-light: #00b27f;
 
-    /* Jade */
-    --accent-color: #00A878;
-    --accent-color-dark: #00523A;
-    --accent-color-light: #00E0A1;
+    /* Orange */
+    --orange: #de6b48;
+    --orange-dark: #a03b1d;
+    --orange-light: #e48568;
 
-    /* Mulberry */
-    --important-color: #B95F89;
-    --important-color-dark: #803859;
-    --important-color-light: #D39CB6;
+    /* ---- Semantic Colour Aliases ---- */
+    --primary-color: var(--blue);
+    --accent-color: var(--green);
+    --accent-color-dark: var(--green-dark);
+    --accent-color-light: var(--green-light);
+    --important-color: var(--orange);
+    --important-color-dark: var(--orange-dark);
+    --important-color-light: var(--orange-light);
 }
 
 a {
@@ -45,7 +45,7 @@ a {
 }
 
 a:hover {
-    color: var(--important-color) !important;
+    color: var(--primary-color) !important;
 }
 
 strong {
@@ -57,21 +57,34 @@ em {
 }
 
 .reference.external {
-    color: var(--primary-color);
+    color: var(--accent-color);
 }
 
 .std.std-ref {
-    color: var(--primary-color);
+    color: var(--accent-color);
 }
 .std.std-ref:hover {
-    color: var(--important-color);
+    color: var(--primary-color);
 }
 
 /* ----------------- */
 /* Grid Card         */
 /* ----------------- */
+.sd-card {
+    background-color: var(--bg-color-dark) !important;
+    border: 2px solid var(--border-color) !important;
+    border-radius: 0 !important;
+}
+.sd-card .sd-card-header,
+.sd-card .sd-card-body,
+.sd-card .sd-card-footer {
+    background-color: transparent !important;
+}
+.sd-card .sd-card-header {
+    border-bottom: 1px solid var(--border-color) !important;
+}
 .sd-card:hover {
-    border-color: var(--important-color) !important;
+    border-color: var(--primary-color) !important;
 }
 .sd-card-header {
     font-size: var(--pst-font-size-h4);
@@ -93,17 +106,23 @@ em {
 /* Primary Sidebar */
 /* ----------------- */
 .bd-sidebar-primary {
-    --pst-color-primary: var(--accent-color);
+    --pst-color-primary: var(--brand-color);
+    background-color: var(--bg-color-light) !important;
+    border-right: 1px solid var(--border-color) !important;
+    box-shadow: -100vw 0 0 0 var(--bg-color-light);
 }
 .bd-links-nav a:hover {
-    color: var(--important-color) !important;
+    color: var(--accent-color) !important;
 }
 
 /* ----------------- */
 /* Secondary Sidebar */
 /* ----------------- */
 .bd-sidebar-secondary {
-    --pst-color-primary: var(--accent-color);
+    --pst-color-primary: var(--brand-color);
+    background-color: var(--bg-color-light) !important;
+    border-left: 1px solid var(--border-color) !important;
+    box-shadow: 100vw 0 0 0 var(--bg-color-light);
 }
 
 /* ----------------- */
@@ -113,19 +132,33 @@ em {
     color: var(--accent-color) !important;
 }
 .prev-next-title:hover {
-    color: var(--important-color) !important;
+    color: var(--primary-color) !important;
 }
 
 /* ----------------- */
 /* Light/Dark Theme */
 /* ----------------- */
 html[data-theme="light"] {
-    --pst-color-primary: var(--primary-color-dark);
+    --brand-color: #1175d5;
+    --bg-color: #ebebeb;
+    --bg-color-dark: #d5d5d5;
+    --bg-color-light: #f5f5f5;
+    --border-color: #c3c3c3;
+    --border-color-muted: #b7b7b7;
+
+    --pst-color-primary: var(--accent-color);
+    --pst-color-secondary: var(--accent-color);
     --pst-text-color: #000000 !important;
+
+    background: linear-gradient(to bottom, var(--bg-color-light), var(--bg-color-dark)) fixed;
+
+    body {
+        background: transparent !important;
+    }
 
     /* Navbar */
     .bd-header {
-        background-color: var(--primary-color-light) !important;
+        background-color: var(--bg-color-dark) !important;
     }
     .bd-header a p {
         color: var(--pst-text-color) !important;
@@ -133,12 +166,26 @@ html[data-theme="light"] {
 }
 
 html[data-theme="dark"] {
-    --pst-color-primary: var(--primary-color-light);
+    --brand-color: #1175d5;
+    --bg-color: #181818;
+    --bg-color-dark: #121212;
+    --bg-color-light: #282828;
+    --border-color: #404040;
+    --border-color-muted: #363636;
+
+    --pst-color-primary: var(--accent-color);
+    --pst-color-secondary: var(--accent-color);
     --pst-text-color: #EFEFEF !important;
+
+    background: linear-gradient(to bottom, var(--bg-color-light), var(--bg-color-dark)) fixed;
+
+    body {
+        background: transparent !important;
+    }
 
     /* Navbar */
     .bd-header {
-        background-color: var(--primary-color-dark) !important;
+        background-color: var(--bg-color-dark) !important;
     }
     .bd-header a p {
         color: var(--pst-text-color) !important;
@@ -148,6 +195,12 @@ html[data-theme="dark"] {
 /* -------------------- */
 /* API Reference Tables */
 /* -------------------- */
+.pst-scrollable-table-container tr:nth-child(odd) {
+    background-color: var(--bg-color-light) !important;
+}
+.pst-scrollable-table-container tr:nth-child(even) {
+    background-color: var(--bg-color-dark) !important;
+}
 .pst-scrollable-table-container tr:hover {
     background-color: inherit !important;
 }
@@ -189,10 +242,10 @@ dt.sig {
 }
 
 #navbar-main-elements .nav-link:hover {
-    color: var(--important-color) !important;
+    color: var(--accent-color) !important;
 }
 
 #navbar-main-elements .active-nav-link {
-    color: var(--accent-color) !important;
+    color: var(--brand-color) !important;
     font-weight: bold;
 }
