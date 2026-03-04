@@ -4,7 +4,7 @@ This module provides built-in evaluators specifically designed for
 classification problems. These evaluators calculate performance measures
 and metrics that are relevant for classification tasks.
 """
-from typing import Any, Dict
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -97,12 +97,12 @@ class ConfusionMatrix(measure_evaluator.MeasureEvaluator):
         and reporting.
         """
         prediction = self._generate_prediction(model, X)
-        results = self._calculate_measures(prediction, y)
+        results = self.calculate_measures(prediction, y)
         metadata = self._generate_metadata(model, X.attrs["is_test"])
         self._save_json(results, filename, metadata)
-        self._log_results(results)
+        self.log_results(results)
 
-    def _calculate_measures(
+    def calculate_measures(
         self,
         prediction: pd.Series,
         y: np.ndarray,
@@ -145,7 +145,7 @@ class ConfusionMatrix(measure_evaluator.MeasureEvaluator):
             }
         return data
 
-    def _log_results(self, data: Dict[str, Any]) -> None:
+    def log_results(self, data: Dict[str, Any]) -> None:
         """Log the results of the confusion matrix to console.
 
         Displays the confusion matrix in a formatted table format
@@ -182,3 +182,40 @@ class ConfusionMatrix(measure_evaluator.MeasureEvaluator):
         table = header + "\n".join(rows)
         confusion_log = f"Confusion Matrix:\n{table}"
         self.services.logger.logger.info(confusion_log)
+
+    def report(
+        self,
+        results: Dict[str, Any]
+    ) -> Tuple[List[str], List[List[Any]]]:
+        """Generate a report of the confusion matrix results.
+
+        Converts confusion matrix results into a tabular format suitable
+        for reporting, with actual labels as rows and predicted labels as columns.
+
+        Parameters
+        ----------
+        results : Dict[str, Any]
+            The results containing confusion_matrix and labels
+
+        Returns
+        -------
+        Tuple[List[str], List[List[Any]]]
+            A tuple containing:
+            - List of column headers: ["Actual \\ Predicted", label1, label2, ...]
+            - Nested list of rows with actual labels and counts
+        """
+        labels = results.get("labels", [])
+        cm = results.get("confusion_matrix", [])
+        
+        # Convert labels to strings
+        str_labels = [str(label) for label in labels]
+        columns = ["Actual \\ Predicted"] + str_labels
+        
+        rows = []
+        for i, label in enumerate(str_labels):
+            row = [label]
+            if i < len(cm):
+                row.extend([str(count) for count in cm[i]])
+            rows.append(row)
+        
+        return columns, rows

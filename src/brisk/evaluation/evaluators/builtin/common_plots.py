@@ -117,15 +117,15 @@ class PlotLearningCurve(plot_evaluator.PlotEvaluator):
         The training sizes are automatically determined as fractions of
         the total dataset size, ranging from 10% to 100%.
         """
-        plot_data = self._generate_plot_data(
+        plot_data = self.generate_plot_data(
             model, X, y, cv, num_repeats, n_jobs, metric
         )
         plot = self._create_plot(plot_data, metric, model)
         metadata = self._generate_metadata(model, X.attrs["is_test"])
         self._save_plot(filename, metadata, plot=plot)
-        self._log_results("Learning Curve", filename)
+        self.log_results("Learning Curve", filename)
 
-    def _generate_plot_data(
+    def generate_plot_data(
         self,
         model: base.BaseEstimator,
         X: pd.DataFrame, # pylint: disable=C0103
@@ -389,7 +389,7 @@ class PlotFeatureImportance(plot_evaluator.PlotEvaluator):
         The plot dimensions are automatically adjusted based on the number
         of features to ensure readability.
         """
-        importance_data, plot_width, plot_height = self._generate_plot_data(
+        importance_data, plot_width, plot_height = self.generate_plot_data(
             model, X, y, threshold, feature_names, metric, num_rep
         )
         display_name = self.metric_config.get_name(metric)
@@ -399,9 +399,9 @@ class PlotFeatureImportance(plot_evaluator.PlotEvaluator):
         self._save_plot(
             filename, metadata, plot=plot, height=plot_height, width=plot_width
         )
-        self._log_results("Feature Importance", filename)
+        self.log_results("Feature Importance", filename)
 
-    def _generate_plot_data(
+    def generate_plot_data(
         self,
         model: base.BaseEstimator,
         X: pd.DataFrame, # pylint: disable=C0103
@@ -640,16 +640,16 @@ class PlotModelComparison(plot_evaluator.PlotEvaluator):
 
         Results are saved with metadata for later analysis and reporting.
         """
-        plot_data = self._generate_plot_data(*models, X=X, y=y, metric=metric)
+        plot_data = self.generate_plot_data(*models, X=X, y=y, metric=metric)
         if plot_data is None:
             return
         display_name = self.metric_config.get_name(metric)
         plot = self._create_plot(plot_data, display_name)
         metadata = self._generate_metadata(list(models), X.attrs["is_test"])
         self._save_plot(filename, metadata, plot=plot)
-        self._log_results("Model Comparison", filename)
+        self.log_results("Model Comparison", filename)
 
-    def _generate_plot_data(
+    def generate_plot_data(
         self,
         *models: base.BaseEstimator,
         X: pd.DataFrame,
@@ -849,7 +849,7 @@ class PlotShapleyValues(plot_evaluator.PlotEvaluator):
         If SHAP is not installed, the method will log a warning and
         skip SHAP plot generation.
         """
-        plot_data = self._generate_plot_data(
+        plot_data = self.generate_plot_data(
             model, X, y
         )
 
@@ -866,9 +866,9 @@ class PlotShapleyValues(plot_evaluator.PlotEvaluator):
                 )
                 metadata = self._generate_metadata(model, X.attrs["is_test"])
                 self._save_plot(plot_filename, metadata, plot=plot)
-                self._log_results("SHAP Values", plot_filename)
+                self.log_results("SHAP Values", plot_filename)
 
-    def _generate_plot_data(
+    def generate_plot_data(
         self,
         model: base.BaseEstimator,
         X: pd.DataFrame, # pylint: disable=C0103
