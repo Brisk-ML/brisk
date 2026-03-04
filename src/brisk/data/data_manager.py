@@ -501,8 +501,8 @@ class DataManager:
         """
         if missing_preprocessor:
             missing_preprocessor.fit(X_train, y_train)
-            X_train = missing_preprocessor.transform(X_train)
-            X_test = missing_preprocessor.transform(X_test)
+            X_train, _ = missing_preprocessor.transform(X_train, y_train)
+            X_test, _ = missing_preprocessor.transform(X_test, None)
             current_feature_names = missing_preprocessor.get_feature_names(
                 current_feature_names
             )
@@ -567,7 +567,7 @@ class DataManager:
         -----
         This method:
         1. Fits the encoding preprocessor on training data
-        2. Transforms both features and target variables
+        2. Transforms both features and optionally target using transform()
         3. Updates feature names to include encoded features
         4. Updates categorical features list to include all encoded features
         5. Logs a warning if categorical features exist but no encoder is
@@ -578,10 +578,11 @@ class DataManager:
                 X_train, y_train, current_categorical_features
             )
 
-            # Transform features and target (always returns tuple now)
+            # Transform - handles both features and optionally target
             X_train, y_train = encoding_preprocessor.transform(X_train, y_train)
             X_test, y_test = encoding_preprocessor.transform(X_test, y_test)
-
+            
+            # Update feature names
             current_feature_names = encoding_preprocessor.get_feature_names(
                 current_feature_names
             )
@@ -676,6 +677,8 @@ class DataManager:
 
             # Apply scaling (only to continuous features)
             scaling_preprocessor.fit(X_train, y_train, features_to_exclude)
+            X_train, _ = scaling_preprocessor.transform(X_train, y_train)
+            X_test, _ = scaling_preprocessor.transform(X_test, None)
             fitted_scaler = scaling_preprocessor.scaler
         return X_train, X_test, fitted_scaler
 
@@ -732,8 +735,8 @@ class DataManager:
             if fitted_scaler:
                 feature_selector.scaler = fitted_scaler
             feature_selector.fit(X_train, y_train)
-            X_train = feature_selector.transform(X_train)
-            X_test = feature_selector.transform(X_test)
+            X_train, _ = feature_selector.transform(X_train, y_train)
+            X_test, _ = feature_selector.transform(X_test, None)
             current_feature_names = feature_selector.get_feature_names(
                 current_feature_names
             )
