@@ -99,29 +99,39 @@ class TestCreateCommand:
         """Test that create command creates project directory."""
         monkeypatch.chdir(tmp_path)
 
-        result = cli_runner.invoke(create, ["-n", "my_project"])
+        result = cli_runner.invoke(
+            create, ["-n", "my_project", "-t", "regression"]
+        )
 
         assert result.exit_code == 0
         assert (tmp_path / "my_project").exists()
-        assert "new project was created" in result.output
+        assert "new regression project was created" in result.output
 
-    def test_create_briskconfig(self, cli_runner, tmp_path, monkeypatch):
-        """Test that create command creates .briskconfig file."""
+    def test_create_brisk_dir(self, cli_runner, tmp_path, monkeypatch):
+        """Test that create command creates .brisk/ metadata directory."""
         monkeypatch.chdir(tmp_path)
 
-        result = cli_runner.invoke(create, ["-n", "my_project"])
+        result = cli_runner.invoke(
+            create, ["-n", "my_project", "-t", "regression"]
+        )
 
         assert result.exit_code == 0
-        config_file = tmp_path / "my_project" / ".briskconfig"
-        assert config_file.exists()
-        content = config_file.read_text()
-        assert "project_name=my_project" in content
+        brisk_dir = tmp_path / "my_project" / ".brisk"
+        assert brisk_dir.is_dir()
+        assert (brisk_dir / "brisk.sqlite").exists()
+        project_json = brisk_dir / "project.json"
+        assert project_json.exists()
+        content = json.loads(project_json.read_text())
+        assert content["project_name"] == "my_project"
+        assert content["project_type"] == "regression"
 
     def test_create_settings_py(self, cli_runner, tmp_path, monkeypatch):
         """Test that create command creates settings.py file."""
         monkeypatch.chdir(tmp_path)
 
-        result = cli_runner.invoke(create, ["-n", "my_project"])
+        result = cli_runner.invoke(
+            create, ["-n", "my_project", "-t", "regression"]
+        )
 
         assert result.exit_code == 0
         settings_file = tmp_path / "my_project" / "settings.py"
@@ -136,7 +146,9 @@ class TestCreateCommand:
         """Test that create command creates algorithms.py file."""
         monkeypatch.chdir(tmp_path)
 
-        result = cli_runner.invoke(create, ["-n", "my_project"])
+        result = cli_runner.invoke(
+            create, ["-n", "my_project", "-t", "regression"]
+        )
 
         assert result.exit_code == 0
         algorithms_file = tmp_path / "my_project" / "algorithms.py"
@@ -144,13 +156,14 @@ class TestCreateCommand:
         content = algorithms_file.read_text()
         assert "AlgorithmCollection" in content
         assert "REGRESSION_ALGORITHMS" in content
-        assert "CLASSIFICATION_ALGORITHMS" in content
 
     def test_create_metrics_py(self, cli_runner, tmp_path, monkeypatch):
         """Test that create command creates metrics.py file."""
         monkeypatch.chdir(tmp_path)
 
-        result = cli_runner.invoke(create, ["-n", "my_project"])
+        result = cli_runner.invoke(
+            create, ["-n", "my_project", "-t", "regression"]
+        )
 
         assert result.exit_code == 0
         metrics_file = tmp_path / "my_project" / "metrics.py"
@@ -163,7 +176,9 @@ class TestCreateCommand:
         """Test that create command creates data.py file."""
         monkeypatch.chdir(tmp_path)
 
-        result = cli_runner.invoke(create, ["-n", "my_project"])
+        result = cli_runner.invoke(
+            create, ["-n", "my_project", "-t", "regression"]
+        )
 
         assert result.exit_code == 0
         data_file = tmp_path / "my_project" / "data.py"
@@ -176,7 +191,9 @@ class TestCreateCommand:
         """Test that create command creates evaluators.py file."""
         monkeypatch.chdir(tmp_path)
 
-        result = cli_runner.invoke(create, ["-n", "my_project"])
+        result = cli_runner.invoke(
+            create, ["-n", "my_project", "-t", "regression"]
+        )
 
         assert result.exit_code == 0
         evaluators_file = tmp_path / "my_project" / "evaluators.py"
@@ -191,7 +208,9 @@ class TestCreateCommand:
         """Test that create command creates workflows directory."""
         monkeypatch.chdir(tmp_path)
 
-        result = cli_runner.invoke(create, ["-n", "my_project"])
+        result = cli_runner.invoke(
+            create, ["-n", "my_project", "-t", "regression"]
+        )
 
         assert result.exit_code == 0
         workflows_dir = tmp_path / "my_project" / "workflows"
@@ -202,7 +221,9 @@ class TestCreateCommand:
         """Test that create command creates workflow.py template."""
         monkeypatch.chdir(tmp_path)
 
-        result = cli_runner.invoke(create, ["-n", "my_project"])
+        result = cli_runner.invoke(
+            create, ["-n", "my_project", "-t", "regression"]
+        )
 
         assert result.exit_code == 0
         workflow_file = tmp_path / "my_project" / "workflows" / "workflow.py"
@@ -215,7 +236,9 @@ class TestCreateCommand:
         """Test that create command creates datasets directory."""
         monkeypatch.chdir(tmp_path)
 
-        result = cli_runner.invoke(create, ["-n", "my_project"])
+        result = cli_runner.invoke(
+            create, ["-n", "my_project", "-t", "regression"]
+        )
 
         assert result.exit_code == 0
         datasets_dir = tmp_path / "my_project" / "datasets"
@@ -226,13 +249,16 @@ class TestCreateCommand:
         """Test that create command creates all expected files."""
         monkeypatch.chdir(tmp_path)
 
-        result = cli_runner.invoke(create, ["-n", "my_project"])
+        result = cli_runner.invoke(
+            create, ["-n", "my_project", "-t", "regression"]
+        )
 
         assert result.exit_code == 0
         project_dir = tmp_path / "my_project"
 
         expected_files = [
-            ".briskconfig",
+            ".brisk/brisk.sqlite",
+            ".brisk/project.json",
             "settings.py",
             "algorithms.py",
             "metrics.py",
@@ -242,6 +268,7 @@ class TestCreateCommand:
         ]
 
         expected_dirs = [
+            ".brisk",
             "datasets",
             "workflows",
         ]

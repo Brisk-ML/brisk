@@ -39,6 +39,6 @@ class TestFindProjectRootIntegration:
         monkeypatch.chdir(tmp_path)
 
         with pytest.raises(
-            FileNotFoundError, match="Could not find .briskconfig"
+            FileNotFoundError, match="Could not find a brisk project"
         ):
             project.find_project_root()
