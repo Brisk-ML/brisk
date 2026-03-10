@@ -8,14 +8,14 @@ configurations match.
 """
 
 import collections
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 
 from brisk.data import data_manager
 from brisk.configuration import (
     experiment_group, experiment_factory, project, algorithm_collection
 )
 from brisk.reporting import formatting
-from brisk.services import get_services
+from brisk.services import get_services, missing, bundle
 from brisk.theme import plot_settings as plot_settings_module
 
 class ConfigurationManager:
@@ -79,8 +79,7 @@ class ConfigurationManager:
     def __init__(
         self,
         experiment_groups: List[experiment_group.ExperimentGroup],
-        categorical_features: Dict[str, List[str]],
-        plot_settings: plot_settings_module.PlotSettings
+        categorical_features: Dict[str, List[str]]
     ):
         """Initialize ConfigurationManager with experiment groups and settings.
 
@@ -109,23 +108,30 @@ class ConfigurationManager:
         6. Generates configuration documentation
         7. Sets up output directory structure
         """
-        self.services = get_services()
-        self.services.io.set_io_settings(plot_settings.get_io_settings())
-        self.services.utility.set_plot_settings(plot_settings)
         self.experiment_groups = experiment_groups
         self.categorical_features = categorical_features
+        self.services = missing.MissingServices()
+        self.algorithm_config = None
+        self.base_data_manager = None
         self.workflow_map = {}
+        self.data_managers = {}
+        self.output_structure = {}
+        self.description_map = {}
         self.project_root = project.find_project_root()
-        self.algorithm_config = self._load_algorithm_config()
-        self.base_data_manager = self._load_base_data_manager()
-        self.data_managers = self._create_data_managers()
-        self.experiment_queue = self._create_experiment_queue()
-        self._create_data_splits()
-        self._create_logfile()
-        self.output_structure = self._get_output_structure()
-        self.description_map = self._create_description_map()
 
-    def _load_base_data_manager(self) -> data_manager.DataManager:
+    def set_services(
+        self,
+        plot_settings: plot_settings_module.PlotSettings,
+        services: Optional[bundle.ServiceBundle] = None
+    ):
+        if services is None:
+            self.services = get_services()
+        else:
+            self.services = services
+        self.services.io.set_io_settings(plot_settings.get_io_settings())
+        self.services.utility.set_plot_settings(plot_settings)
+
+    def load_base_data_manager(self) -> data_manager.DataManager:
         """Load default DataManager configuration from project's data.py.
 
         Loads the base DataManager configuration that serves as the template
@@ -153,12 +159,13 @@ class ConfigurationManager:
         group-specific data managers with custom parameters.
         """
         data_file = self.project_root / "data.py"
-        base_data_manager = self.services.io.load_base_data_manager(data_file)
-        return base_data_manager
+        self.base_data_manager = self.services.io.load_base_data_manager(
+            data_file
+        )
+        self.base_data_manager.set_services(self.services)
+        return self.base_data_manager
 
-    def _load_algorithm_config(
-        self
-    ) -> algorithm_collection.AlgorithmCollection:
+    def load_algorithm_config(self) -> algorithm_collection.AlgorithmCollection:
         """Load algorithm configuration from project's algorithms.py.
 
         Loads the complete algorithm configuration that defines all
@@ -186,8 +193,8 @@ class ConfigurationManager:
         experiment instances with the appropriate algorithms.
         """
         algo_file = self.project_root / "algorithms.py"
-        algo_config = self.services.io.load_algorithms(algo_file)
-        return algo_config
+        self.algorithm_config = self.services.io.load_algorithms(algo_file)
+        return self.algorithm_config
 
     def _get_base_params(self) -> Dict:
         """Get parameters from base DataManager instance.
@@ -213,7 +220,7 @@ class ConfigurationManager:
             if name != "self"
         }
 
-    def _create_data_managers(self) -> Dict[str, data_manager.DataManager]:
+    def create_data_managers(self) -> Dict[str, data_manager.DataManager]:
         """Create minimal set of DataManager instances.
 
         Groups ExperimentGroups by their data_config and creates one
@@ -237,6 +244,11 @@ class ConfigurationManager:
         This optimization is particularly important when running many
         experiments with similar data processing requirements.
         """
+        if self.base_data_manager is None:
+            raise ValueError(
+                "self.base_data_manager is not set. "
+                "Call load_base_data_manager() first."
+            )
         config_groups = collections.defaultdict(list)
         for group in self.experiment_groups:
             # Create a hashable key for grouping similar configurations
@@ -270,14 +282,16 @@ class ConfigurationManager:
                 base_params = self._get_base_params()
                 base_params.update(first_group.data_config)
                 manager = data_manager.DataManager(**base_params)
+                manager.set_services(self.services)
 
             for name in group_names:
                 self.services.reporting.add_data_manager(name, manager)
                 managers[name] = manager
 
-        return managers
+        self.data_managers = managers
+        return self.data_managers
 
-    def _create_experiment_queue(self) -> collections.deque:
+    def create_experiment_queue(self) -> collections.deque:
         """Create queue of experiments from all ExperimentGroups.
 
         Creates an ExperimentFactory with loaded algorithm configuration,
@@ -315,9 +329,10 @@ class ConfigurationManager:
             experiments = factory.create_experiments(group, n_splits)
             all_experiments.extend(experiments)
 
-        return all_experiments
+        self.experiment_queue = all_experiments
+        return self.experiment_queue
 
-    def _create_data_splits(self) -> None:
+    def create_data_splits(self) -> None:
         """Create DataSplitInfo instances for all datasets.
 
         Creates data splits for each dataset in each experiment group using
@@ -355,7 +370,7 @@ class ConfigurationManager:
                     filename=dataset_path.stem
                 )
 
-    def _create_logfile(self) -> None:
+    def create_logfile(self) -> None:
         """Create a markdown string describing the configuration.
 
         Generates comprehensive documentation of the experiment configuration
@@ -440,7 +455,7 @@ class ConfigurationManager:
 
         self.logfile = "\n".join(md_content)
 
-    def _get_output_structure(self) -> Dict[str, Dict[str, Tuple[str, str]]]:
+    def get_output_structure(self) -> Dict[str, Dict[str, Tuple[str, str]]]:
         """Get the directory structure for experiment outputs.
 
         Creates a nested dictionary structure that maps experiment groups
@@ -481,9 +496,10 @@ class ConfigurationManager:
 
             output_structure[group.name] = dataset_info
 
-        return output_structure
+        self.output_structure = output_structure
+        return self.output_structure
 
-    def _create_description_map(self) -> Dict[str, str]:
+    def create_description_map(self) -> Dict[str, str]:
         """Create a mapping of group names to descriptions.
 
         Creates a simple mapping of experiment group names to their
@@ -502,8 +518,9 @@ class ConfigurationManager:
         filtered out to avoid cluttering the output with meaningless
         entries.
         """
-        return {
+        self.description_map = {
             group.name: group.description
             for group in self.experiment_groups
             if group.description != ""
         }
+        return self.description_map

@@ -15,10 +15,12 @@ AlgorithmWrapper
 
 from typing import Any, Dict, Optional, Type
 
+from sklearn import base
+
 from brisk.reporting import formatting
 
 class AlgorithmWrapper:
-    """A wrapper class for machine learning algorithms.
+    """A wrapper for scikit learn algorithm implementations.
 
     Provides methods to instantiate models with default or tuned parameters
     and manages hyperparameter grids for model tuning. This class serves as
@@ -90,8 +92,7 @@ class AlgorithmWrapper:
     ):
         """Initialize the AlgorithmWrapper with an algorithm class.
 
-        Creates a new AlgorithmWrapper instance with validation of all
-        parameters. Ensures the algorithm class is from scikit-learn and
+        Ensures the algorithm class is from scikit-learn and
         validates parameter types.
 
         Parameters
@@ -114,14 +115,6 @@ class AlgorithmWrapper:
             of the expected types
         ValueError
             If algorithm_class is not from scikit-learn module
-
-        Notes
-        -----
-        The constructor performs comprehensive validation:
-        - Ensures name and display_name are strings
-        - Validates algorithm_class is a class from scikit-learn
-        - Converts None parameters to empty dictionaries
-        - Validates parameter dictionaries are actually dictionaries
         """
         if not isinstance(name, str):
             raise TypeError("name must be a string")
@@ -129,7 +122,7 @@ class AlgorithmWrapper:
             raise TypeError("display_name must be a string")
         if not isinstance(algorithm_class, Type):
             raise TypeError("algorithm_class must be a class")
-        if not algorithm_class.__module__.startswith("sklearn"):
+        if not issubclass(algorithm_class, base.BaseEstimator):
             raise ValueError("algorithm_class must be from sklearn")
 
         self.name = name
@@ -172,11 +165,6 @@ class AlgorithmWrapper:
 
         Update hyperparameter grid:
             >>> wrapper["hyperparam_grid"] = {"C": [0.1, 1.0, 10.0]}
-
-        Notes
-        -----
-        This method uses dict.update() to merge the provided parameters
-        with existing parameters, allowing for incremental updates.
         """
         if not isinstance(value, dict):
             raise TypeError(f"value must be a dict, got {type(value)}")
@@ -363,7 +351,7 @@ class AlgorithmWrapper:
             >>> config = wrapper.export_config()
             >>> # Save config to file or database
         """
-        config = {
+        return {
             "name": self.name,
             "display_name": self.display_name,
             "algorithm_class_module": self.algorithm_class.__module__,
@@ -371,8 +359,6 @@ class AlgorithmWrapper:
             "default_params": self._serialize_params(self.default_params),
             "hyperparam_grid": self._serialize_params(self.hyperparam_grid)
         }
-
-        return config
 
     def _serialize_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -412,7 +398,7 @@ class AlgorithmWrapper:
                         "_brisk_object_type": "sklearn_estimator",
                         "module": value.__class__.__module__,
                         "class_name": value.__class__.__name__,
-                        "params": value.get_params()
+                        "params": value.get_params(self)
                     }
                 else:
                     serialized[key] = {
@@ -471,7 +457,7 @@ class AlgorithmWrapper:
                             "_brisk_object_type": "sklearn_estimator",
                             "module": estimator.__class__.__module__,
                             "class_name": estimator.__class__.__name__,
-                            "params": estimator.get_params()
+                            "params": estimator.get_params(self)
                         }
                     ])
                 else:

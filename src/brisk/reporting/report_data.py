@@ -526,10 +526,10 @@ class Experiment(RoundedModel):
         Tuned hyperparameter names and values
     hyperparam_grid : Dict[str, Any]
         Hyperparameter grid used for tuning
-    tables : List[TableData]
-        List of tables containing experiment results
-    plots : List[PlotData]
-        List of plots visualizing experiment results
+    tables : Dict[str, List[TableData]]
+        Tables keyed by split_id (e.g. 'split_0', 'split_1')
+    plots : Dict[str, List[PlotData]]
+        Plots keyed by split_id (e.g. 'split_0', 'split_1')
         
     Examples
     --------
@@ -539,8 +539,8 @@ class Experiment(RoundedModel):
     ...     algorithm=["Random Forest", "SVM"],
     ...     tuned_params={"n_estimators": 100, "max_depth": 10},
     ...     hyperparam_grid={"n_estimators": [50, 100, 200]},
-    ...     tables=[TableData(...)],
-    ...     plots=[PlotData(...)]
+    ...     tables={"split_0": [TableData(...)]},
+    ...     plots={"split_0": [PlotData(...)]}
     ... )
     """
     ID: str
@@ -556,11 +556,13 @@ class Experiment(RoundedModel):
     hyperparam_grid: Dict[str, Any] = Field(
         default_factory=dict, description="Hyperparameter grid used for tuning"
     )
-    tables: List[TableData] = Field(
-        default_factory=list, description="List of tables for this experiment"
+    tables: Dict[str, List[TableData]] = Field(
+        default_factory=dict,
+        description="Tables keyed by split_id (e.g. 'split_0')"
     )
-    plots: List[PlotData] = Field(
-        default_factory=list, description="List of plots for this experiment"
+    plots: Dict[str, List[PlotData]] = Field(
+        default_factory=dict,
+        description="Plots keyed by split_id (e.g. 'split_0')"
     )
 
 

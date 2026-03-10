@@ -114,14 +114,14 @@ class DatasetMeasureEvaluator(base.BaseEvaluator):
         The method delegates the actual measure calculation to the
         _calculate_measures method, which must be implemented by subclasses.
         """
-        results = self._calculate_measures(train_data, test_data, feature_names)
+        results = self.calculate_measures(train_data, test_data, feature_names)
         metadata = self._generate_metadata(dataset_name, group_name)
         self._save_json(results, filename, metadata)
-        self._log_results(results, filename)
+        self.log_results(results, filename)
         return results
 
     @abc.abstractmethod
-    def _calculate_measures(
+    def calculate_measures(
         self,
         train_data: pd.DataFrame | pd.Series,
         test_data: pd.DataFrame | pd.Series,
@@ -224,7 +224,7 @@ class DatasetMeasureEvaluator(base.BaseEvaluator):
             self.method_name, dataset_name, group_name
         )
 
-    def _log_results(self, results: Dict[str, float], filename: str) -> None:
+    def log_results(self, results: Dict[str, float], filename: str) -> None:
         """Default logging - can be overridden.
 
         Logs the evaluation results in a standardized format. This method

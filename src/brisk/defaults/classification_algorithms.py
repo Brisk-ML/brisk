@@ -68,8 +68,7 @@ CLASSIFICATION_ALGORITHMS: List[algorithm_wrapper.AlgorithmWrapper] = [
         default_params={"min_samples_split": 10},
         hyperparam_grid={
             "n_estimators": list(range(20, 160, 20)),
-            "criterion": ["friedman_mse", "absolute_error",
-                          "poisson", "squared_error"],
+            "criterion": ["gini", "entropy", "log_loss"],
             "max_depth": list(range(5, 25, 5)) + [None],
         }
     ),

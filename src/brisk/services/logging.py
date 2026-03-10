@@ -244,6 +244,7 @@ class LoggingService(base.BaseService):
 
         # Remove all existing handlers to prevent duplicates
         for handler in logger.handlers[:]:
+            handler.close()
             logger.removeHandler(handler)
 
         # Console handler
@@ -287,6 +288,17 @@ class LoggingService(base.BaseService):
             logger.addHandler(self._memory_handler)
 
         self.logger = logger
+
+    def close_file_handlers(self) -> None:
+        """Close and remove all file handlers from the logger.
+
+        This releases file locks on log files, which is necessary on Windows
+        before the files can be deleted or moved.
+        """
+        for handler in self.logger.handlers[:]:
+            if isinstance(handler, logging.FileHandler):
+                handler.close()
+                self.logger.removeHandler(handler)
 
     def set_results_dir(self, results_dir: pathlib.Path) -> None:
         """Set the results directory and reconfigure logging.

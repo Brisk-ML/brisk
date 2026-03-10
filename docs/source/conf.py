@@ -137,7 +137,7 @@ html_theme_options = {
     "navbar_persistent": ["search-button"],
     "show_nav_level": 3,
     "switcher": {
-        "json_url": "https://brisk.readthedocs.io/en/latest/_static/versions.json",
+        "json_url": "https://docs.briskml.org/en/latest/_static/versions.json",
         "version_match": version
     }
 }

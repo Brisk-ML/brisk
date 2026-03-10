@@ -19,9 +19,10 @@ from typing import Any, List, Optional, Tuple, Dict
 import numpy as np
 import pandas as pd
 
+from brisk.data import splitkey
 from brisk.evaluation.evaluators import registry as registry_module
 from brisk.evaluation.evaluators.builtin import register_dataset_evaluators
-from brisk.services import get_services
+from brisk.services import get_services, missing, bundle
 
 class DataSplitInfo:
     """Store and analyze features and labels of training and testing splits.
@@ -127,7 +128,7 @@ class DataSplitInfo:
         y_test: pd.Series,
         group_index_train: Dict[str, np.array] | None,
         group_index_test: Dict[str, np.array] | None,
-        split_key: Tuple[str, str, str],
+        split_key: splitkey.SplitKey,
         split_index: int,
         scaler: Optional[Any] = None,
         categorical_features: Optional[List[str]] = None,
@@ -174,26 +175,16 @@ class DataSplitInfo:
         5. Categorizes features as categorical or continuous
         6. Performs automatic data split evaluation
         """
-        self.group_name = split_key[0]
-        self.file_name = split_key[1]
-        self.table_name = split_key[2]
+        self.group_name = split_key.group_name
+        self.file_name = split_key.dataset_name
+        self.table_name = split_key.table_name
         if self.table_name is not None:
             self.dataset_name = f"{self.file_name}_{self.table_name}"
         else:
             self.dataset_name = self.file_name
         self.features = []
         self.split_index = split_index
-
-        self.services = get_services()
-        self.services.io.set_output_dir(pathlib.Path(
-            os.path.join(
-                self.services.io.results_dir,
-                self.group_name,
-                self.dataset_name,
-                f"split_{split_index}",
-                "split_distribution"
-            )
-        ))
+        self.services = missing.MissingServices()
 
         self.X_train = X_train.copy(deep=True) # pylint: disable=C0103
         self.X_test = X_test.copy(deep=True) # pylint: disable=C0103
@@ -201,27 +192,48 @@ class DataSplitInfo:
         self.y_test = y_test.copy(deep=True)
         self.group_index_train = group_index_train
         self.group_index_test = group_index_test
+        self._verify_data_exists()
 
-        plot_settings = self.services.utility.get_plot_settings()
         self.registry = registry_module.EvaluatorRegistry()
-        register_dataset_evaluators(self.registry, plot_settings)
-        for evaluator in self.registry.evaluators.values():
-            evaluator.set_services(self.services)
 
         self.categorical_features = []
+        self._detected_categorical_features = []
         self.continuous_features = []
         self._set_features(
             X_train.columns, categorical_features, continuous_features
         )
         self.scaler = scaler
-        self.evaluate_data_split()
+
+    def set_services(self, services: Optional[bundle.ServiceBundle] = None):
+        if services:
+            self.services = services
+        else:
+            self.services = get_services()
+        self.services.io.set_output_dir(pathlib.Path(
+            os.path.join(
+                self.services.io.results_dir,
+                self.group_name,
+                self.dataset_name,
+                f"split_{self.split_index}",
+                "split_distribution"
+            )
+        ))
+        self.services.logger.logger.info(
+            "Detected %d categorical features: %s",
+            len(self._detected_categorical_features),
+            self._detected_categorical_features
+        )
+        plot_settings = self.services.utility.get_plot_settings()
+        register_dataset_evaluators(self.registry, plot_settings)
+        for evaluator in self.registry.evaluators.values():
+            evaluator.set_services(self.services)
 
     def evaluate_data_split(self) -> None:
         """Evaluate distribution of features in the train and test splits.
 
         This method calculates descriptive statistics for both continuous and 
         categorical features in the training and testing splits. It also 
-        generates plots including histograms, boxplots, pie plots, and 
+        generates plots including histograms, boxplots, bar plots, and 
         correlation matrices.
 
         The method uses the evaluator registry to get the appropriate evaluators 
@@ -275,7 +287,7 @@ class DataSplitInfo:
                 evaluator = self.registry.get("brisk_bar_plot")
                 evaluator.plot(
                     self.X_train[feature], self.X_test[feature],
-                    feature, f"pie_plot/{feature}_pie_plot",
+                    feature, f"bar_plot/{feature}_bar_plot",
                     self.dataset_name, self.group_name
                 )
             evaluator = self.registry.get("brisk_correlation_matrix")
@@ -329,17 +341,13 @@ class DataSplitInfo:
                 series.dtype == "object",
                 series.dtype == "category",
                 series.dtype == "bool",
-                (n_unique / n_samples < 0.05)
+                (n_unique / n_samples <= 0.05)
             ])
 
             if is_categorical:
                 categorical_features.append(column)
 
-        self.services.logger.logger.info(
-            "Detected %d categorical features: %s",
-            len(categorical_features),
-            categorical_features
-        )
+        self._detected_categorical_features = categorical_features
         return categorical_features
 
     def get_train(self) -> Tuple[pd.DataFrame, pd.Series]:
@@ -549,7 +557,10 @@ class DataSplitInfo:
         ]
 
         if continuous_features is None or len(continuous_features) == 0:
-            self.continuous_features = []
+            self.continuous_features = [
+                feature for feature in columns
+                if feature not in self.categorical_features
+            ]
         else:
             self.continuous_features = [
                 feature for feature in continuous_features
@@ -559,3 +570,11 @@ class DataSplitInfo:
                 )
             ]
         self.features = self.continuous_features + self.categorical_features
+
+    def _verify_data_exists(self):
+        dataframes = [self.X_train, self.X_test, self.y_train, self.y_test]
+        if any(df.empty for df in dataframes):
+            raise ValueError(
+                f"No data detected for split {self.split_index} of "
+                f"{self.dataset_name} in the {self.group_name} group."
+            )

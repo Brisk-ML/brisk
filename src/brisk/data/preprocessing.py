@@ -61,9 +61,9 @@ class BasePreprocessor(abc.ABC):
         ...     def fit(self, X, y=None, categorical_features=None):
         ...         # Fit logic
         ...         return self
-        ...     def transform(self, X):
+        ...     def transform(self, X, y=None):
         ...         # Transform logic
-        ...         return X
+        ...         return X, y
         ...     def export_params(self):
         ...         # Export parameters
         ...         return {}
@@ -135,24 +135,38 @@ class BasePreprocessor(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def transform(self, X: pd.DataFrame) -> pd.DataFrame:  # pylint: disable=C0103
+    def transform(
+        self,
+        X: pd.DataFrame,  # pylint: disable=C0103
+        y: Optional[pd.Series] = None
+    ) -> Tuple[pd.DataFrame, Optional[pd.Series]]:
         """Transform the data using the fitted preprocessor.
 
         Parameters
         ----------
         X : pd.DataFrame
-            Data to transform
+            Features to transform
+        y : pd.Series, optional
+            Target values to transform (if applicable)
 
         Returns
         -------
-        pd.DataFrame
-            Transformed data
+        Tuple[pd.DataFrame, Optional[pd.Series]]
+            Tuple containing (transformed_X, transformed_y). The target y
+            will be None if not provided, or transformed if the preprocessor
+            modifies it (e.g., CategoricalEncodingPreprocessor)
+
+        Raises
+        ------
+        ValueError
+            If preprocessor has not been fitted
 
         Notes
         -----
-        This method should apply the transformation learned during fit
-        to the provided data. It should raise an error if called before
-        the preprocessor has been fitted.
+        All preprocessors must return a tuple (X, y). 
+        Even if a preprocessor doesn't transform y, it must still return the
+        tuple with y unchanged. This allows all preprocessors to be called
+        uniformly: X, y = preprocessor.transform(X, y)
         """
         pass
 
@@ -177,7 +191,7 @@ class BasePreprocessor(abc.ABC):
         X: pd.DataFrame, # pylint: disable=C0103
         y: Optional[pd.Series] = None,
         categorical_features: Optional[List[str]] = None
-    ) -> pd.DataFrame:
+    ) -> Tuple[pd.DataFrame, Optional[pd.Series]]:
         """Fit the preprocessor and transform the data.
 
         Convenience method that combines fit and transform operations
@@ -194,8 +208,8 @@ class BasePreprocessor(abc.ABC):
 
         Returns
         -------
-        pd.DataFrame
-            Transformed data
+        Tuple[pd.DataFrame, Optional[pd.Series]]
+            Tuple containing (transformed_X, transformed_y)
 
         Notes
         -----
@@ -203,7 +217,7 @@ class BasePreprocessor(abc.ABC):
         on the same data. It's provided for convenience and follows the
         scikit-learn pattern.
         """
-        return self.fit(X, y, categorical_features).transform(X)
+        return self.fit(X, y, categorical_features).transform(X, y)
 
     def get_feature_names(self, feature_names: List[str]) -> List[str]:
         """Get the feature names after preprocessing.
@@ -381,18 +395,25 @@ class MissingDataPreprocessor(BasePreprocessor):
         self.is_fitted = True
         return self
 
-    def transform(self, X: pd.DataFrame) -> pd.DataFrame: # pylint: disable=C0103
+    def transform(
+        self,
+        X: pd.DataFrame,  # pylint: disable=C0103
+        y: Optional[pd.Series] = None
+    ) -> Tuple[pd.DataFrame, Optional[pd.Series]]:
         """Transform the data by handling missing values.
 
         Parameters
         ----------
         X : pd.DataFrame
-            Data to transform
+            Features to transform
+        y : pd.Series, optional
+            Target values (passed through unchanged)
 
         Returns
         -------
-        pd.DataFrame
-            Data with missing values handled
+        Tuple[pd.DataFrame, Optional[pd.Series]]
+            Tuple containing (transformed_X, y). The y is returned unchanged
+            as this preprocessor only handles missing values in features
 
         Raises
         ------
@@ -404,6 +425,8 @@ class MissingDataPreprocessor(BasePreprocessor):
         The transformation applies the strategy learned during fit:
         - For "drop_rows": removes any rows with missing values
         - For "impute": fills missing values using learned imputation values
+        
+        The target variable y is not modified by this preprocessor.
         """
         if not self.is_fitted:
             raise ValueError("Preprocessor must be fitted before transform")
@@ -414,6 +437,8 @@ class MissingDataPreprocessor(BasePreprocessor):
         if self.strategy == "drop_rows":
             # Drop rows with any missing values
             X_transformed = X_transformed.dropna() # pylint: disable=C0103
+            if y is not None:
+                y = y.loc[X_transformed.index]
         elif self.strategy == "impute":
             # Fill missing values with fitted values
             for column, value in self.constant_values.items():
@@ -446,7 +471,8 @@ class MissingDataPreprocessor(BasePreprocessor):
                         X_transformed[column] = X_transformed[column].fillna(
                             mode_value
                         )
-        return X_transformed
+        
+        return X_transformed, y
 
     def get_feature_names(self, feature_names: List[str]) -> List[str]:
         """Get the feature names after missing data handling.
@@ -645,7 +671,7 @@ class ScalingPreprocessor(BasePreprocessor):
         X: pd.DataFrame, # pylint: disable=C0103
         y: Optional[pd.Series] = None,
         categorical_features: Optional[List[str]] = None
-    ) -> pd.DataFrame:
+    ) -> Tuple[pd.DataFrame, Optional[pd.Series]]:
         """Fit the scaler and transform the data.
 
         Parameters
@@ -659,17 +685,21 @@ class ScalingPreprocessor(BasePreprocessor):
 
         Returns
         -------
-        pd.DataFrame
-            Transformed data with scaled continuous features
+        Tuple[pd.DataFrame, Optional[pd.Series]]
+            Tuple containing (scaled_X, y). The y is returned unchanged
 
         Notes
         -----
         This method combines fit and transform operations, scaling only
         the continuous features while preserving categorical features.
         """
-        return self.fit(X, y, categorical_features).transform(X)
+        return self.fit(X, y, categorical_features).transform(X, y)
 
-    def transform(self, X: pd.DataFrame) -> pd.DataFrame: # pylint: disable=C0103
+    def transform(
+        self,
+        X: pd.DataFrame,  # pylint: disable=C0103
+        y: Optional[pd.Series] = None
+    ) -> Tuple[pd.DataFrame, Optional[pd.Series]]:
         """Transform the data using the fitted scaler.
 
         Applies scaling to continuous features while preserving
@@ -678,20 +708,24 @@ class ScalingPreprocessor(BasePreprocessor):
         Parameters
         ----------
         X : pd.DataFrame
-            Data to transform
+            Features to transform
+        y : pd.Series, optional
+            Target values (passed through unchanged)
 
         Returns
         -------
-        pd.DataFrame
-            Transformed data with scaled continuous features
+        Tuple[pd.DataFrame, Optional[pd.Series]]
+            Tuple containing (scaled_X, y). The y is returned unchanged
+            as this preprocessor only scales features
 
         Notes
         -----
         Only features that were scaled during fit are transformed.
         Categorical features remain unchanged.
+        The target variable y is not modified by this preprocessor.
         """
         if not self.scaler:
-            return X.copy()
+            return X.copy(), y
 
         X_transformed = X.copy()  # pylint: disable=C0103
 
@@ -703,7 +737,7 @@ class ScalingPreprocessor(BasePreprocessor):
             for i, feature in enumerate(features_to_scale):
                 X_transformed[feature] = scaled_features[:, i]
 
-        return X_transformed
+        return X_transformed, y
 
     def get_feature_names(
         self,
@@ -980,6 +1014,7 @@ class CategoricalEncodingPreprocessor(BasePreprocessor):
         a key in the method dictionary, it will also be encoded.
         """
         categorical_features = categorical_features or []
+        
         # Handle target encoding if target name matches method dict
         if self._should_encode_target(y):
             target_method = self._get_method_for_feature(y.name)
@@ -1045,7 +1080,7 @@ class CategoricalEncodingPreprocessor(BasePreprocessor):
         X: pd.DataFrame, # pylint: disable=C0103
         y: Optional[pd.Series] = None,
         categorical_features: Optional[List[str]] = None
-    ) -> pd.DataFrame:
+    ) -> Tuple[pd.DataFrame, Optional[pd.Series]]:
         """Fit the encoders and transform the data.
 
         Parameters
@@ -1059,17 +1094,18 @@ class CategoricalEncodingPreprocessor(BasePreprocessor):
 
         Returns
         -------
-        pd.DataFrame
-            Transformed data with encoded categorical features
+        Tuple[pd.DataFrame, Optional[pd.Series]]
+            Tuple containing (encoded_X, encoded_y). The target y may be
+            encoded if its name matches a key in the method dictionary
 
         Notes
         -----
-        This method combines fit and transform operations, encoding
-        categorical features and optionally the target variable.
+        This method combines fit and transform operations. The target will
+        be automatically encoded if its name matches a key in the method
+        dictionary.
         """
         self.fit(X, y, categorical_features)
-        X_transformed, y_transformed = self.transform(X, y) # pylint: disable=C0103
-        return X_transformed, y_transformed
+        return self.transform(X, y)
 
     def _get_method_for_feature(self, feature: str) -> str:
         """Get the encoding method for a specific feature.
@@ -1091,23 +1127,24 @@ class CategoricalEncodingPreprocessor(BasePreprocessor):
 
     def transform(
         self,
-        X: pd.DataFrame, # pylint: disable=C0103
+        X: pd.DataFrame,  # pylint: disable=C0103
         y: Optional[pd.Series] = None
-    ) -> Tuple[pd.DataFrame, pd.Series or None]:
-        """Transform the data using the fitted encoders.
+    ) -> Tuple[pd.DataFrame, Optional[pd.Series]]:
+        """Transform features using the fitted encoders.
         
         Parameters
         ----------
         X : pd.DataFrame
             Features to transform
         y : pd.Series, optional
-            Target values to transform (if target name matches method dict)
+            Target values to transform (if applicable)
             
         Returns
         -------
-        Tuple[pd.DataFrame, pd.Series or None]
-            Always returns tuple of (transformed features, transformed target
-            or None)
+        Tuple[pd.DataFrame, Optional[pd.Series]]
+            Tuple containing (encoded_X, encoded_y). The target y may be
+            encoded if its name matches a key in the method dictionary,
+            otherwise it's returned unchanged
 
         Raises
         ------
@@ -1116,19 +1153,18 @@ class CategoricalEncodingPreprocessor(BasePreprocessor):
 
         Notes
         -----
-        The method applies the learned encoding to both features and
-        optionally the target variable. It always returns a tuple
-        for consistency.
+        The method applies the encoding.
+
         """
         if not self.is_fitted:
             raise ValueError("Preprocessor must be fitted before transform")
 
-        X_transformed = self._transform_features(X) # pylint: disable=C0103
-
+        X_transformed = self._transform_features(X)  # pylint: disable=C0103
+        
+        # Transform target if it should be encoded
+        y_transformed = y
         if self._should_encode_target(y) and self.target_encoder:
             y_transformed = self._transform_target(y)
-        else:
-            y_transformed = y
 
         return X_transformed, y_transformed
 
@@ -1598,7 +1634,11 @@ class FeatureSelectionPreprocessor(BasePreprocessor):
         self.is_fitted = True
         return self
 
-    def transform(self, X: pd.DataFrame) -> pd.DataFrame:  # pylint: disable=C0103
+    def transform(
+        self,
+        X: pd.DataFrame,  # pylint: disable=C0103
+        y: Optional[pd.Series] = None
+    ) -> Tuple[pd.DataFrame, Optional[pd.Series]]:
         """Transform the data using the fitted selector.
 
         Applies the learned feature selection to new data, returning only
@@ -1607,12 +1647,15 @@ class FeatureSelectionPreprocessor(BasePreprocessor):
         Parameters
         ----------
         X : pd.DataFrame
-            Data to transform
+            Features to transform
+        y : pd.Series, optional
+            Target values (passed through unchanged)
 
         Returns
         -------
-        pd.DataFrame
-            Data with only selected features
+        Tuple[pd.DataFrame, Optional[pd.Series]]
+            Tuple containing (selected_X, y). The y is returned unchanged
+            as this preprocessor only selects features
 
         Raises
         ------
@@ -1624,18 +1667,21 @@ class FeatureSelectionPreprocessor(BasePreprocessor):
         The method returns the selected features from the original unscaled
         data, not the scaled version used during fitting. This ensures
         that the output data maintains the original scale and meaning.
+        The target variable y is not modified by this preprocessor.
         """
         if not self.is_fitted:
             raise ValueError("Preprocessor must be fitted before transform")
 
         if self.selector is None:
-            return X
+            return X, y
 
         # Get selected feature names
         selected_features = self.get_feature_names(list(X.columns))
 
         # Return selected features from original unscaled data
-        return X[selected_features]
+        X_transformed = X[selected_features]  # pylint: disable=C0103
+        
+        return X_transformed, y
 
     def get_feature_names(self, feature_names: List[str]) -> List[str]:
         """Get the selected feature names after feature selection.
@@ -1681,12 +1727,24 @@ class FeatureSelectionPreprocessor(BasePreprocessor):
         suitable for JSON serialization. Note that complex objects like
         estimators may not be directly serializable.
         """
+        # Convert estimators to string representation for JSON serialization
+        estimator_str = (
+            type(self.estimator).__name__ if self.estimator else None
+        )
+        fs_estimator_str = (
+            type(self.feature_selection_estimator).__name__
+            if self.feature_selection_estimator else None
+        )
+        algo_config_str = (
+            str(self.algorithm_config) if self.algorithm_config else None
+        )
+        
         return {
             "method": self.method,
             "n_features_to_select": self.n_features_to_select,
             "feature_selection_cv": self.feature_selection_cv,
-            "estimator": self.estimator,
-            "algorithm_config": self.algorithm_config,
-            "feature_selection_estimator": self.feature_selection_estimator,
+            "estimator": estimator_str,
+            "algorithm_config": algo_config_str,
+            "feature_selection_estimator": fs_estimator_str,
             "problem_type": self.problem_type
         }

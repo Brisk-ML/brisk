@@ -93,10 +93,21 @@ class NumpyEncoder(json.JSONEncoder):
         if isinstance(o, np.integer):
             return int(o)
         if isinstance(o, np.floating):
-            return float(o)
+            val = float(o)
+            # Handle NaN and Infinity which are not valid JSON
+            if np.isnan(val) or np.isinf(val):
+                return None
+            return val
         if isinstance(o, np.ndarray):
-            return list(o)
-        return super(NumpyEncoder, self).default(o)
+            return o.tolist()
+        if isinstance(o, (float, int)) and (np.isnan(o) if isinstance(o, float) else False):
+            return None
+        # Handle any other non-serializable objects by converting to string
+        try:
+            return super(NumpyEncoder, self).default(o)
+        except TypeError:
+            # For sklearn estimators and other complex objects, store type name
+            return f"<{type(o).__module__}.{type(o).__name__}>"
 
 
 class IOService(base.BaseService):
@@ -249,8 +260,9 @@ class IOService(base.BaseService):
             with open(output_path, "w", encoding="utf-8") as file:
                 json.dump(data, file, indent=4, cls=NumpyEncoder)
 
+            filename = pathlib.Path(output_path).stem
             self._other_services["reporting"].store_table_data(
-                data, metadata
+                data, metadata, filename
             )
 
         except IOError as e:
@@ -306,8 +318,9 @@ class IOService(base.BaseService):
 
         height = kwargs.get("height", self.height)
         width = kwargs.get("width", self.width)
+        filename = output_path.stem
         output_path = output_path.with_suffix(f".{self.format}")
-        self._convert_to_svg(metadata, plot, height, width)
+        self._convert_to_svg(metadata, plot, height, width, filename)
 
         try:
             if metadata:
@@ -352,7 +365,7 @@ class IOService(base.BaseService):
             os.makedirs(output_path.parent, exist_ok=True)
         try:
             with open(output_path, "w", encoding="utf-8") as file:
-                json.dump(data, file, indent=4)
+                json.dump(data, file, indent=4, cls=NumpyEncoder, allow_nan=False)
 
         except IOError as e:
             self._other_services["logging"].logger.info(
@@ -364,7 +377,8 @@ class IOService(base.BaseService):
         metadata: Dict[str, Any],
         plot: Optional[pn.ggplot | go.Figure],
         height,
-        width
+        width,
+        filename: str = ""
     ) -> None:
         """Convert plot to SVG format for the report.
 
@@ -378,6 +392,8 @@ class IOService(base.BaseService):
             The plot height in inches
         width : int
             The plot width in inches
+        filename : str
+            The filename stem for cache key disambiguation
 
         Returns
         -------
@@ -406,7 +422,7 @@ class IOService(base.BaseService):
             svg_str = svg_buffer.getvalue().decode("utf-8")
             svg_buffer.close()
             self._other_services["reporting"].store_plot_svg(
-                svg_str, metadata
+                svg_str, metadata, filename
             )
 
         except IOError as e:
@@ -727,8 +743,7 @@ class IOService(base.BaseService):
             )
 
         except (ImportError, AttributeError) as e:
-            print(f"Error validating workflow: {e}")
-            return rerun.handle_load_workflow(None, workflow_name)
+            raise ImportError(f"Failed to load workflow {workflow_name}") from e
 
     def _validate_single_variable(
         self,

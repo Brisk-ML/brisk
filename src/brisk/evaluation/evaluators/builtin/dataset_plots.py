@@ -67,7 +67,7 @@ class Histogram(dataset_plot_evaluator.DatasetPlotEvaluator):
         None
             The plot is saved to the specified filename
         """
-        plot_data = self._generate_plot_data(
+        plot_data = self.generate_plot_data(
             train_data, test_data, feature_name
         )
         plot = self._create_plot(plot_data)
@@ -75,9 +75,9 @@ class Histogram(dataset_plot_evaluator.DatasetPlotEvaluator):
             dataset_name, group_name, feature_name
         )
         self._save_plot(filename, metadata, plot=plot)
-        self._log_results(self.method_name, filename)
+        self.log_results(self.method_name, filename)
 
-    def _generate_plot_data(
+    def generate_plot_data(
         self,
         train_data: pd.Series,
         test_data: pd.Series,
@@ -270,7 +270,7 @@ class BarPlot(dataset_plot_evaluator.DatasetPlotEvaluator):
         None
             The plot is saved to the specified filename
         """
-        plot_data = self._generate_plot_data(
+        plot_data = self.generate_plot_data(
             train_data, test_data, feature_name
         )
         plot = self._create_plot(plot_data)
@@ -278,9 +278,9 @@ class BarPlot(dataset_plot_evaluator.DatasetPlotEvaluator):
             dataset_name, group_name, feature_name
         )
         self._save_plot(filename, metadata, plot=plot)
-        self._log_results(self.method_name, filename)
+        self.log_results(self.method_name, filename)
 
-    def _generate_plot_data(
+    def generate_plot_data(
         self,
         train_data: pd.Series,
         test_data: pd.Series,
@@ -461,13 +461,13 @@ class CorrelationMatrix(dataset_plot_evaluator.DatasetPlotEvaluator):
         None
             The plot is saved to the specified filename
         """
-        plot_data = self._generate_plot_data(train_data, continuous_features)
+        plot_data = self.generate_plot_data(train_data, continuous_features)
         plot = self._create_plot(plot_data)
         metadata = self._generate_metadata(dataset_name, group_name)
         self._save_plot(filename, metadata, plot=plot)
-        self._log_results(self.method_name, filename)
+        self.log_results(self.method_name, filename)
 
-    def _generate_plot_data(
+    def generate_plot_data(
         self,
         train_data: pd.DataFrame,
         continuous_features: List[str],

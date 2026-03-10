@@ -150,11 +150,11 @@ class PlotEvaluator(base_eval.BaseEvaluator):
         creation to the abstract methods, which must be implemented
         by subclasses.
         """
-        plot_data = self._generate_plot_data(model, X, y)
+        plot_data = self.generate_plot_data(model, X, y)
         plot = self._create_plot(plot_data)
         metadata = self._generate_metadata(model, X.attrs["is_test"])
         self._save_plot(filename, metadata, plot=plot)
-        self._log_results(self.method_name, filename)
+        self.log_results(self.method_name, filename)
 
     def _save_plot(
         self,
@@ -224,7 +224,7 @@ class PlotEvaluator(base_eval.BaseEvaluator):
         return model.predict(X)
 
     @abc.abstractmethod
-    def _generate_plot_data(
+    def generate_plot_data(
         self,
         model: base.BaseEstimator,
         X: pd.DataFrame, # pylint: disable=C0103
@@ -295,7 +295,7 @@ class PlotEvaluator(base_eval.BaseEvaluator):
         """
         pass
 
-    def _log_results(self, plot_name: str, filename: str) -> None:
+    def log_results(self, plot_name: str, filename: str) -> None:
         """Default logging - can be overridden.
         
         Logs the plot creation results in a standardized format.

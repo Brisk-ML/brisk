@@ -22,10 +22,23 @@ class ExperimentPageRenderer {
         this.renderDataSplits(template);
     }
 
+    getInitialSplitTables() {
+        const tables = this.experimentData.tables;
+        if (!tables || typeof tables !== 'object') return [];
+        return tables['split_0'] || Object.values(tables)[0] || [];
+    }
+
+    getInitialSplitPlots() {
+        const plots = this.experimentData.plots;
+        if (!plots || typeof plots !== 'object') return [];
+        return plots['split_0'] || Object.values(plots)[0] || [];
+    }
+
     renderExperimentTables(template) {
         const container = template.querySelector('.experiment-tables');
-        
-        if (!this.experimentData.tables || this.experimentData.tables.length === 0) {
+        const tables = this.getInitialSplitTables();
+
+        if (tables.length === 0) {
             container.innerHTML = '<p>No tables available</p>';
             return;
         }
@@ -35,7 +48,7 @@ class ExperimentPageRenderer {
 
         const tablesContent = container.querySelector('.tables-content');
 
-        this.experimentData.tables.forEach((tableData, index) => {
+        tables.forEach((tableData, index) => {
             const tableName = document.createElement('div');
             tableName.textContent = tableData.name;
             tableName.className = `table-name ${index === this.selectedTableIndex ? 'selected' : ''}`;
@@ -50,7 +63,8 @@ class ExperimentPageRenderer {
     renderSelectedTable(contentContainer) {
         contentContainer.innerHTML = '';
         
-        const selectedTable = this.experimentData.tables[this.selectedTableIndex];
+        const tables = this.getInitialSplitTables();
+        const selectedTable = tables[this.selectedTableIndex];
         if (selectedTable) {
             const tableRenderer = new TableRenderer(selectedTable);
             const tableElement = tableRenderer.render();
@@ -60,8 +74,9 @@ class ExperimentPageRenderer {
 
     renderExperimentPlots(template) {
         const container = template.querySelector('.experiment-plots');
-        
-        if (!this.experimentData.plots || this.experimentData.plots.length === 0) {
+        const plots = this.getInitialSplitPlots();
+
+        if (plots.length === 0) {
             container.innerHTML = '<p>No plots available</p>';
             return;
         }
@@ -71,7 +86,7 @@ class ExperimentPageRenderer {
 
         const plotsContent = container.querySelector('.plots-content');
         
-        this.experimentData.plots.forEach((plotData, index) => {
+        plots.forEach((plotData, index) => {
             const plotName = document.createElement('div');
             plotName.textContent = plotData.name;
             plotName.className = `plot-name ${index === this.selectedPlotIndex ? 'selected' : ''}`;
@@ -86,7 +101,8 @@ class ExperimentPageRenderer {
     renderSelectedPlot(contentContainer) {
         contentContainer.innerHTML = '';
         
-        const selectedPlot = this.experimentData.plots[this.selectedPlotIndex];
+        const plots = this.getInitialSplitPlots();
+        const selectedPlot = plots[this.selectedPlotIndex];
         if (selectedPlot) {
             const plotRenderer = new PlotRenderer(selectedPlot);
             const plotElement = plotRenderer.render();

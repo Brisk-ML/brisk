@@ -505,10 +505,9 @@ class ReportingService(base.BaseService):
 
         split_corr_matrices = {}
         for split in split_ids:
-            image_key = (
+            image, _ = self._find_in_image_cache(
                 group_name, dataset_name, split, "brisk_correlation_matrix"
             )
-            image, _ = self._image_cache.get(image_key, (None, None))
             split_corr_matrices[split] = self._create_plot_data(
                 f"{group_name}_{dataset_name}_{split}_correlation_matrix",
                 image
@@ -554,37 +553,46 @@ class ReportingService(base.BaseService):
         -------
         None
         """
-        group_name, dataset_name, _, _, algorithm_names = self.get_context()
+        group_name, dataset_name, split_index, _, algorithm_names = (
+            self.get_context()
+        )
         dataset_name_id = self._get_dataset_name_id(dataset_name)
+        split_id = f"split_{split_index}"
 
         experiment_id = (
             f"{'_'.join(algorithm_names)}_{group_name}_{dataset_name_id}" # pylint: disable=W1405
         )
-        hyperparam_grid = {
-            key: str(value)
-            for key, value in algorithms["model"].hyperparam_grid.items()
-        }
-        tuned_params = {
-            key: str(value)
-            for key, value in self._cached_tuned_params.items()
-        }
         tables = self._process_table_cache()
         plots = self._process_image_cache()
 
-        self.group_to_experiment[group_name].append(experiment_id)
-        algorithm_display_names = [
-            self._other_services["utility"].get_algo_wrapper(name).display_name
-            for name in algorithm_names
-        ]
-        self.experiments[experiment_id] = report_data.Experiment(
-            ID=experiment_id,
-            dataset=f"{group_name}_{dataset_name_id}",
-            algorithm=algorithm_display_names,
-            tuned_params=tuned_params,
-            hyperparam_grid=hyperparam_grid,
-            tables=tables,
-            plots=plots
-        )
+        if experiment_id in self.experiments:
+            self.experiments[experiment_id].tables[split_id] = tables
+            self.experiments[experiment_id].plots[split_id] = plots
+        else:
+            hyperparam_grid = {
+                key: str(value)
+                for key, value in algorithms["model"].hyperparam_grid.items()
+            }
+            tuned_params = {
+                key: str(value)
+                for key, value in self._cached_tuned_params.items()
+            }
+            self.group_to_experiment[group_name].append(experiment_id)
+            algorithm_display_names = [
+                self._other_services["utility"].get_algo_wrapper(
+                    name
+                ).display_name
+                for name in algorithm_names
+            ]
+            self.experiments[experiment_id] = report_data.Experiment(
+                ID=experiment_id,
+                dataset=f"{group_name}_{dataset_name_id}",
+                algorithm=algorithm_display_names,
+                tuned_params=tuned_params,
+                hyperparam_grid=hyperparam_grid,
+                tables={split_id: tables},
+                plots={split_id: plots}
+            )
         self._clear_cache()
 
     def add_experiment_groups(self, groups: List) -> None:
@@ -666,8 +674,8 @@ class ReportingService(base.BaseService):
         ]
 
         for method in methods:
-            plot_image, _ = self._image_cache.get(
-                (group_name, dataset_name, split_id, method), (None, None)
+            plot_image, _ = self._find_in_image_cache(
+                group_name, dataset_name, split_id, method
             )
             if plot_image:
                 break
@@ -682,11 +690,11 @@ class ReportingService(base.BaseService):
         stats_method = "brisk_continuous_statistics"
         cat_stats_method = "brisk_categorical_statistics"
 
-        continuous_cache = self._table_cache.get(
-            (group_name, dataset_name, split_id, stats_method)
+        continuous_cache = self._find_in_table_cache(
+            group_name, dataset_name, split_id, stats_method
         )
-        categorical_cache = self._table_cache.get(
-            (group_name, dataset_name, split_id, cat_stats_method)
+        categorical_cache = self._find_in_table_cache(
+            group_name, dataset_name, split_id, cat_stats_method
         )
         table_data = None
 
@@ -888,7 +896,8 @@ class ReportingService(base.BaseService):
     def store_plot_svg(
         self,
         image: str,
-        metadata: Dict[str, str]
+        metadata: Dict[str, str],
+        filename: str = ""
     ) -> None:
         """Store plot SVG data in the image cache.
 
@@ -904,12 +913,15 @@ class ReportingService(base.BaseService):
         metadata : Dict[str, str]
             The metadata dictionary containing method information and
             other plot-related metadata
+        filename : str
+            The output filename stem, used to disambiguate multiple
+            calls to the same evaluation method
 
         Notes
         -----
         The plot is stored using a key composed of the current context
-        (group_name, dataset_name, split_id) and the method name from
-        metadata. This ensures plots are properly organized and can be
+        (group_name, dataset_name, split_id), the method name, and the
+        filename. This ensures plots are properly organized and can be
         retrieved during report generation.
 
         Examples
@@ -918,18 +930,21 @@ class ReportingService(base.BaseService):
         >>> reporting_service.set_context("classification", "iris", 0)
         >>> svg_data = "<svg>...</svg>"
         >>> metadata = {"method": "brisk_correlation_matrix", "type": "plot"}
-        >>> reporting_service.store_plot_svg(svg_data, metadata)
+        >>> reporting_service.store_plot_svg(svg_data, metadata, "correlation_matrix")
         """
         group_name, dataset_name, split, _, _ = self.get_context()
+        cache_filename = filename or metadata["method"]
         image_id = (
-            group_name, dataset_name, f"split_{split}", metadata["method"]
+            group_name, dataset_name, f"split_{split}",
+            metadata["method"], cache_filename
         )
         self._image_cache[image_id] = (image, metadata)
 
     def store_table_data(
         self,
         data: Dict[str, Any],
-        metadata: Dict[str, str]
+        metadata: Dict[str, str],
+        filename: str = ""
     ) -> None:
         """Store table data in the table cache using current context.
 
@@ -946,12 +961,15 @@ class ReportingService(base.BaseService):
         metadata : Dict[str, str]
             The metadata dictionary containing method information and
             other table-related metadata
+        filename : str
+            The output filename stem, used to disambiguate multiple
+            calls to the same evaluation method
 
         Notes
         -----
         The table is stored using a key composed of the current context
-        (group_name, dataset_name, split_id) and the method name from
-        metadata. This ensures tables are properly organized and can be
+        (group_name, dataset_name, split_id), the method name, and the
+        filename. This ensures tables are properly organized and can be
         retrieved during report generation.
 
         Examples
@@ -960,11 +978,15 @@ class ReportingService(base.BaseService):
         >>> reporting_service.set_context("classification", "iris", 0)
         >>> table_data = {"accuracy": 0.95, "precision": 0.92, "recall": 0.88}
         >>> metadata = {"method": "brisk_evaluate_model", "is_test": "True"}
-        >>> reporting_service.store_table_data(table_data, metadata)
+        >>> reporting_service.store_table_data(table_data, metadata, "test_score")
         """
         group_name, dataset_name, split_index, _, _ = self.get_context()
         split_id = f"split_{split_index}"
-        table_id = (group_name, dataset_name, split_id, metadata["method"])
+        cache_filename = filename or metadata["method"]
+        table_id = (
+            group_name, dataset_name, split_id,
+            metadata["method"], cache_filename
+        )
         self._table_cache[table_id] = data, metadata
 
     def _process_table_cache(self) -> List[report_data.TableData]:
@@ -989,6 +1011,7 @@ class ReportingService(base.BaseService):
         tables = []
         for context, (data, metadata) in self._table_cache.items():
             evaluator_name = context[3]
+            filename = context[4]
             evaluator = self.registry.get(evaluator_name)
 
             data_type = self._get_data_type(metadata["is_test"])
@@ -996,7 +1019,7 @@ class ReportingService(base.BaseService):
             columns, rows = evaluator.report(data)
 
             table = report_data.TableData(
-                name=evaluator.method_name,
+                name=filename,
                 description=description,
                 columns=columns,
                 rows=rows
@@ -1027,18 +1050,45 @@ class ReportingService(base.BaseService):
         plots = []
         for context, (image, metadata) in self._image_cache.items():
             evaluator_name = context[3]
+            filename = context[4]
             evaluator = self.registry.get(evaluator_name)
 
             data_type = self._get_data_type(metadata["is_test"])
             description = evaluator.description + f"({data_type})"
 
             plot = report_data.PlotData(
-                name=evaluator.method_name,
+                name=filename,
                 description=description,
                 image=image
             )
             plots.append(plot)
         return plots
+
+    def _find_in_image_cache(
+        self,
+        group_name: str,
+        dataset_name,
+        split_id: str,
+        method: str
+    ):
+        """Look up an image cache entry by the first 4 key elements."""
+        for key, value in self._image_cache.items():
+            if key[:4] == (group_name, dataset_name, split_id, method):
+                return value
+        return (None, None)
+
+    def _find_in_table_cache(
+        self,
+        group_name: str,
+        dataset_name,
+        split_id: str,
+        method: str
+    ):
+        """Look up a table cache entry by the first 4 key elements."""
+        for key, value in self._table_cache.items():
+            if key[:4] == (group_name, dataset_name, split_id, method):
+                return value
+        return None
 
     def _clear_cache(self):
         """Clear the caches.

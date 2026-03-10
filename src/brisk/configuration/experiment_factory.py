@@ -32,10 +32,9 @@ Examples
 import collections
 from typing import List, Dict, Any, Deque, Union
 
-from brisk.configuration import experiment
-from brisk.configuration import experiment_group
-from brisk.configuration import algorithm_wrapper
-from brisk.configuration import algorithm_collection
+from brisk.configuration import (
+        experiment, experiment_group, algorithm_wrapper, algorithm_collection
+)
 
 class ExperimentFactory:
     """Factory for creating Experiment instances from ExperimentGroups.
