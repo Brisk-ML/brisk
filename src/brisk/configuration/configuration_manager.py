@@ -322,7 +322,6 @@ class ConfigurationManager:
         all_experiments = collections.deque()
         for group in self.experiment_groups:
             workflow_class = self.services.io.load_workflow(group.workflow)
-            print(workflow_class)
             self.workflow_map[group.workflow] = workflow_class
             n_splits = group.data_config.get(
                 "n_splits", self.base_data_manager.n_splits
