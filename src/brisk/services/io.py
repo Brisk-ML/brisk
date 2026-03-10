@@ -260,8 +260,9 @@ class IOService(base.BaseService):
             with open(output_path, "w", encoding="utf-8") as file:
                 json.dump(data, file, indent=4, cls=NumpyEncoder)
 
+            filename = pathlib.Path(output_path).stem
             self._other_services["reporting"].store_table_data(
-                data, metadata
+                data, metadata, filename
             )
 
         except IOError as e:
@@ -317,8 +318,9 @@ class IOService(base.BaseService):
 
         height = kwargs.get("height", self.height)
         width = kwargs.get("width", self.width)
+        filename = output_path.stem
         output_path = output_path.with_suffix(f".{self.format}")
-        self._convert_to_svg(metadata, plot, height, width)
+        self._convert_to_svg(metadata, plot, height, width, filename)
 
         try:
             if metadata:
@@ -375,7 +377,8 @@ class IOService(base.BaseService):
         metadata: Dict[str, Any],
         plot: Optional[pn.ggplot | go.Figure],
         height,
-        width
+        width,
+        filename: str = ""
     ) -> None:
         """Convert plot to SVG format for the report.
 
@@ -389,6 +392,8 @@ class IOService(base.BaseService):
             The plot height in inches
         width : int
             The plot width in inches
+        filename : str
+            The filename stem for cache key disambiguation
 
         Returns
         -------
@@ -417,7 +422,7 @@ class IOService(base.BaseService):
             svg_str = svg_buffer.getvalue().decode("utf-8")
             svg_buffer.close()
             self._other_services["reporting"].store_plot_svg(
-                svg_str, metadata
+                svg_str, metadata, filename
             )
 
         except IOError as e:
