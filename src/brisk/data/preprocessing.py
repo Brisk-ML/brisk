@@ -437,6 +437,8 @@ class MissingDataPreprocessor(BasePreprocessor):
         if self.strategy == "drop_rows":
             # Drop rows with any missing values
             X_transformed = X_transformed.dropna() # pylint: disable=C0103
+            if y is not None:
+                y = y.loc[X_transformed.index]
         elif self.strategy == "impute":
             # Fill missing values with fitted values
             for column, value in self.constant_values.items():

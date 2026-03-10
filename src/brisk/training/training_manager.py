@@ -864,6 +864,7 @@ class TrainingManager:
         unnecessary empty log files.
         """
         progress_bar.close()
+        self.services.logger.close_file_handlers()
         error_log_path = os.path.join(results_dir, "error_log.txt")
         if (os.path.exists(error_log_path)
             and os.path.getsize(error_log_path) == 0

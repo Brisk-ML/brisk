@@ -232,10 +232,10 @@ class TestReportingService:
             algorithm_names=["ridge"]
         )
 
-        reporting_service._image_cache[("g", "d", "s", "m")] = ("img", {
+        reporting_service._image_cache[("g", "d", "s", "m", "f")] = ("img", {
             "method": "test", "is_test": False
         })
-        reporting_service._table_cache[("g", "d", "s", "m")] = ({}, {
+        reporting_service._table_cache[("g", "d", "s", "m", "f")] = ({}, {
             "method": "test", "is_test": False
         })
         reporting_service._cached_tuned_params = {"param": "value"}

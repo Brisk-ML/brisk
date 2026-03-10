@@ -983,7 +983,7 @@ class PlotShapleyValues(plot_evaluator.PlotEvaluator):
                     x="Feature",
                     y="Mean |SHAP Value|"
                 ) +
-                self.theme.brisk_theme()
+                self.theme
             )
 
         elif plot_type == "waterfall":
@@ -1019,7 +1019,7 @@ class PlotShapleyValues(plot_evaluator.PlotEvaluator):
                         y="SHAP Value"
                     ) +
                     pn.geom_hline(yintercept=0, linetype="dashed", alpha=0.7) +
-                    self.theme.brisk_theme()
+                    self.theme
                 )
             else:
                 # Fallback to bar plot if no data
@@ -1040,7 +1040,7 @@ class PlotShapleyValues(plot_evaluator.PlotEvaluator):
                     x="Feature",
                     y="SHAP Value"
                 ) +
-                self.theme.brisk_theme()
+                self.theme
             )
 
         elif plot_type == "beeswarm":
@@ -1058,7 +1058,7 @@ class PlotShapleyValues(plot_evaluator.PlotEvaluator):
                     x="Feature",
                     y="SHAP Value"
                 ) +
-                self.theme.brisk_theme()
+                self.theme
             )
         else:
             # Default to bar plot

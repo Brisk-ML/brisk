@@ -10,7 +10,6 @@ from typing import Dict, List, Optional, Tuple, Union
 import pytest
 
 import numpy as np
-from sklearn import linear_model, svm, ensemble
 from sklearn import metrics as sk_metrics
 
 import brisk
@@ -81,45 +80,6 @@ def get_metric_config() -> brisk.MetricManager:
     )
 
 
-def get_algorithm_config() -> brisk.AlgorithmCollection:
-    """Create algorithm configuration with standard and custom algorithms."""
-    return brisk.AlgorithmCollection(
-        *brisk.REGRESSION_ALGORITHMS,
-        *brisk.CLASSIFICATION_ALGORITHMS,
-        brisk.AlgorithmWrapper(
-            name="linear2",
-            display_name="Linear Regression (Second)",
-            algorithm_class=linear_model.LinearRegression
-        ),
-        brisk.AlgorithmWrapper(
-            name="svc2",
-            display_name="SVC (Second)",
-            algorithm_class=svm.SVC
-        ),
-        brisk.AlgorithmWrapper(
-            name="xtree",
-            display_name="Extra Tree Regressor",
-            algorithm_class=ensemble.ExtraTreesRegressor,
-            default_params={"min_samples_split": 10},
-            hyperparam_grid={
-                "n_estimators": list(range(20, 160, 20)),
-                "criterion": ["friedman_mse", "absolute_error",
-                              "poisson", "squared_error"],
-                "max_depth": list(range(5, 25, 5)) + [None]
-            }
-        ),
-        brisk.AlgorithmWrapper(
-            name="linear_svc",
-            display_name="Linear Support Vector Classification",
-            algorithm_class=svm.LinearSVC,
-            default_params={"max_iter": 10000},
-            hyperparam_grid={
-                "C": list(np.arange(1, 30, 0.5)),
-                "penalty": ["l1", "l2"],
-            }
-        )
-    )
-
 
 # =============================================================================
 # Dataset Configuration
@@ -162,12 +122,12 @@ ALGORITHMS_BY_PROBLEM = {
         "multi": [["linear", "lasso"], ["ridge", "elasticnet"]],
     },
     "binary": {
-        "single": ["logistic", "svc", "dtc"],
-        "multi": [["logistic", "svc"], ["dtc", "knn_classifier"]],
+        "single": ["logistic", "dtc", "ridge_classifier"],
+        "multi": [["logistic", "dtc"], ["gaussian_nb", "ridge_classifier"]],
     },
     "multiclass": {
-        "single": ["logistic", "knn_classifier", "dtc"],
-        "multi": [["logistic", "knn_classifier"], ["dtc", "gaussian_nb"]],
+        "single": ["logistic", "dtc", "gaussian_nb"],
+        "multi": [["logistic", "dtc"], ["gaussian_nb", "ridge_classifier"]],
     },
 }
 

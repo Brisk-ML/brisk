@@ -233,7 +233,7 @@ class DataSplitInfo:
 
         This method calculates descriptive statistics for both continuous and 
         categorical features in the training and testing splits. It also 
-        generates plots including histograms, boxplots, pie plots, and 
+        generates plots including histograms, boxplots, bar plots, and 
         correlation matrices.
 
         The method uses the evaluator registry to get the appropriate evaluators 
@@ -287,7 +287,7 @@ class DataSplitInfo:
                 evaluator = self.registry.get("brisk_bar_plot")
                 evaluator.plot(
                     self.X_train[feature], self.X_test[feature],
-                    feature, f"pie_plot/{feature}_pie_plot",
+                    feature, f"bar_plot/{feature}_bar_plot",
                     self.dataset_name, self.group_name
                 )
             evaluator = self.registry.get("brisk_correlation_matrix")

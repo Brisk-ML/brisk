@@ -905,11 +905,33 @@ class App {
     }
 
     /**
+     * Get the tables for the currently selected split.
+     * @param {Object} experiment - The experiment object.
+     * @returns {Array} The tables for the current split.
+     */
+    getTablesForCurrentSplit(experiment) {
+        const splitKey = `split_${this.selectedSplitIndex}`;
+        return (experiment.tables && experiment.tables[splitKey]) || [];
+    }
+
+    /**
+     * Get the plots for the currently selected split.
+     * @param {Object} experiment - The experiment object.
+     * @returns {Array} The plots for the current split.
+     */
+    getPlotsForCurrentSplit(experiment) {
+        const splitKey = `split_${this.selectedSplitIndex}`;
+        return (experiment.plots && experiment.plots[splitKey]) || [];
+    }
+
+    /**
      * Select a split on the experiment page.
      * @param {number} splitIndex - The index of the split.
      */
     selectExperimentSplit(splitIndex) {
-        this.selectedSplitIndex = splitIndex;        
+        this.selectedSplitIndex = splitIndex;
+        this.selectedTableIndex = 0;
+        this.selectedPlotIndex = 0;
         this.updateSplitSelection();        
         this.updateExperimentSummary();
         this.updateExperimentTables();
@@ -1111,7 +1133,8 @@ class App {
 
         this.renderFilteredTables(experiment);
         
-        const maxTableIndex = (experiment.tables || []).length - 1;
+        const tables = this.getTablesForCurrentSplit(experiment);
+        const maxTableIndex = tables.length - 1;
         if (this.selectedTableIndex > maxTableIndex) {
             this.selectedTableIndex = Math.max(0, maxTableIndex);
         }
@@ -1129,7 +1152,8 @@ class App {
 
         this.renderFilteredPlots(experiment);
         
-        const maxPlotIndex = (experiment.plots || []).length - 1;
+        const plots = this.getPlotsForCurrentSplit(experiment);
+        const maxPlotIndex = plots.length - 1;
         if (this.selectedPlotIndex > maxPlotIndex) {
             this.selectedPlotIndex = Math.max(0, maxPlotIndex);
         }
@@ -1148,7 +1172,7 @@ class App {
 
         tablesList.innerHTML = '';
 
-        const tables = experiment.tables || [];
+        const tables = this.getTablesForCurrentSplit(experiment);
 
         tables.forEach((tableData, index) => {
             const tableName = document.createElement('div');
@@ -1174,7 +1198,7 @@ class App {
 
         plotsList.innerHTML = '';
 
-        const plots = experiment.plots || [];
+        const plots = this.getPlotsForCurrentSplit(experiment);
 
         plots.forEach((plotData, index) => {
             const plotName = document.createElement('div');
@@ -1201,19 +1225,9 @@ class App {
         const experiment = this.reportData.experiments[this.currentExperimentId];
         if (!experiment) return originalTableData;
 
-        const splitDisplayName = `Split ${this.selectedSplitIndex}`;
         const currentAlgorithm = experiment.algorithm[this.selectedAlgorithmIndex];
-        const splitColumnIndex = originalTableData.columns.findIndex(col => 
-            col.toLowerCase().includes('split')
-        );
 
         let filteredRows = originalTableData.rows;
-        if (splitColumnIndex !== -1) {
-            filteredRows = filteredRows.filter(row => 
-                row[splitColumnIndex] === splitDisplayName
-            );
-        }
-
         if (experiment.algorithm.length > 1) {
             const algorithmColumnIndex = originalTableData.columns.findIndex(col => 
                 col.toLowerCase().includes('algorithm')
@@ -1245,7 +1259,8 @@ class App {
 
         tablesContent.innerHTML = '';
 
-        const selectedTable = experiment.tables[this.selectedTableIndex];
+        const tables = this.getTablesForCurrentSplit(experiment);
+        const selectedTable = tables[this.selectedTableIndex];
         if (selectedTable) {
             try {
                 const filteredTableData = this.filterTableDataForCurrentSelection(selectedTable);
@@ -1298,7 +1313,8 @@ class App {
 
         plotsContent.innerHTML = '';
 
-        const selectedPlot = experiment.plots[this.selectedPlotIndex];
+        const plots = this.getPlotsForCurrentSplit(experiment);
+        const selectedPlot = plots[this.selectedPlotIndex];
         if (selectedPlot) {
             try {
                 const filteredPlotData = this.filterPlotDataForCurrentSelection(selectedPlot);

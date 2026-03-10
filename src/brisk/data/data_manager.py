@@ -410,9 +410,9 @@ class DataManager:
         ), None)
 
         # Step 1: Apply missing data preprocessing
-        (X_train, X_test, current_feature_names
+        (X_train, X_test, y_train, y_test, current_feature_names
         ) = self._apply_missing_data_preprocessing(
-            X_train, X_test, y_train, current_feature_names,
+            X_train, X_test, y_train, y_test, current_feature_names,
             missing_preprocessor
         )
 
@@ -457,9 +457,13 @@ class DataManager:
         X_train: pd.DataFrame,  # pylint: disable=C0103
         X_test: pd.DataFrame,  # pylint: disable=C0103
         y_train: Optional[pd.Series],
+        y_test: Optional[pd.Series],
         current_feature_names: List[str],
         missing_preprocessor: Optional[preprocessing.MissingDataPreprocessor]
-    ) -> Tuple[pd.DataFrame, pd.DataFrame, List[str]]:
+    ) -> Tuple[
+        pd.DataFrame, pd.DataFrame, Optional[pd.Series], Optional[pd.Series],
+        List[str]
+    ]:
         """Apply missing data preprocessing.
 
         Handles missing values in the dataset using the configured missing data
@@ -473,6 +477,8 @@ class DataManager:
             Test features
         y_train : pd.Series
             Training target values
+        y_test : pd.Series
+            Test target values
         current_feature_names : List[str]
             Current feature names
         missing_preprocessor : Optional[MissingDataPreprocessor]
@@ -480,9 +486,10 @@ class DataManager:
 
         Returns
         -------
-        Tuple[pd.DataFrame, pd.DataFrame, List[str]]
-            Transformed training data, transformed test data, updated feature
-            names
+        Tuple[pd.DataFrame, pd.DataFrame, Optional[pd.Series],
+        Optional[pd.Series], List[str]]
+            Transformed training data, transformed test data, transformed
+            y_train, transformed y_test, updated feature names
 
         Raises
         ------
@@ -501,8 +508,10 @@ class DataManager:
         """
         if missing_preprocessor:
             missing_preprocessor.fit(X_train, y_train)
-            X_train, _ = missing_preprocessor.transform(X_train, y_train)
-            X_test, _ = missing_preprocessor.transform(X_test, None)
+            X_train, y_train = missing_preprocessor.transform(
+                X_train, y_train
+            )
+            X_test, y_test = missing_preprocessor.transform(X_test, y_test)
             current_feature_names = missing_preprocessor.get_feature_names(
                 current_feature_names
             )
@@ -514,7 +523,7 @@ class DataManager:
                     "MissingDataPreprocessor provided. You must handle missing "
                     "values before proceeding."
                 )
-        return X_train, X_test, current_feature_names
+        return X_train, X_test, y_train, y_test, current_feature_names
 
     def _apply_categorical_encoding(
         self,
@@ -587,14 +596,21 @@ class DataManager:
                 current_feature_names
             )
 
-            # Update categorical features to include encoded features
+            # Update categorical features to include encoded features.
+            # For methods that keep the original name (label, ordinal,
+            # threshold) the feature still appears as-is in current_feature_names.
+            # For methods that expand (onehot, cyclic) the original name is
+            # replaced by prefixed variants.
             updated_categorical_features = []
             for original_cat_feature in current_categorical_features:
-                encoded_features = [
-                    f for f in current_feature_names
-                    if f.startswith(f"{original_cat_feature}_")
-                ]
-                updated_categorical_features.extend(encoded_features)
+                if original_cat_feature in current_feature_names:
+                    updated_categorical_features.append(original_cat_feature)
+                else:
+                    encoded_features = [
+                        f for f in current_feature_names
+                        if f.startswith(f"{original_cat_feature}_")
+                    ]
+                    updated_categorical_features.extend(encoded_features)
             current_categorical_features = updated_categorical_features
         elif current_categorical_features and not encoding_preprocessor:
         # Check if there are categorical features but no encoding preprocessor
@@ -821,7 +837,7 @@ class DataManager:
         if self.group_column:
             X = X.drop(columns=self.group_column)  # pylint: disable=C0103
 
-        feature_names = list(X.columns)
+        original_feature_names = list(X.columns)
 
         split_container = data_splits.DataSplits(self.n_splits)
         for split_index, (train_idx, test_idx) in enumerate(
@@ -830,13 +846,16 @@ class DataManager:
             X_train, X_test = X.iloc[train_idx], X.iloc[test_idx] # pylint: disable=C0103
             y_train, y_test = y.iloc[train_idx], y.iloc[test_idx] # pylint: disable=C0103
 
-            # Apply preprocessing
+            # Apply preprocessing with fresh copies of feature_names and
+            # categorical_features so that mutations from one split don't
+            # leak into the next.
             (
-                X_train, X_test, y_train, y_test, feature_names, # pylint: disable=C0103
-                categorical_features, continuous_features, fitted_scaler
+                X_train, X_test, y_train, y_test, split_feature_names, # pylint: disable=C0103
+                split_categorical, continuous_features, fitted_scaler
             ) = self._apply_preprocessing(  # pylint: disable=C0103
-                X_train, X_test, y_train, y_test, feature_names,
-                categorical_features
+                X_train, X_test, y_train, y_test,
+                list(original_feature_names),
+                list(categorical_features) if categorical_features else []
             )
 
             if self.group_column:
@@ -864,7 +883,7 @@ class DataManager:
                 split_key=split_key,
                 split_index=split_index,
                 scaler=fitted_scaler,
-                categorical_features=categorical_features,
+                categorical_features=split_categorical,
                 continuous_features=continuous_features
             )
             split.set_services()

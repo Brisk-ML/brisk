@@ -18,6 +18,10 @@ create
     Initialize a new project directory with configuration files
 run
     Execute experiments based on a specified workflow
+ui
+    Launch the brisk web UI for dashboard or project creation
+migrate
+    Migrate a project from legacy .briskconfig to .brisk/ format
 load_data
     Load datasets from scikit-learn into the project
 create_data
@@ -30,7 +34,7 @@ check-env
 Examples
 --------
 Create a new project:
-    $ brisk create -n my_project
+    $ brisk create -n my_project -t regression
 
 Run an experiment:
     $ brisk run
@@ -46,6 +50,7 @@ Export environment requirements:
 """
 import os
 import sys
+import sqlite3
 from typing import Optional
 from datetime import datetime
 import json
@@ -74,90 +79,173 @@ def cli() -> None:
     required=True,
     help="Name of the project directory."
 )
-def create(project_name: str) -> None:
+@click.option(
+    "-t",
+    "--type",
+    "problem_type",
+    required=True,
+    type=click.Choice(["classification", "regression"]),
+    help="Problem type: classification or regression."
+)
+def create(project_name: str, problem_type: str) -> None:
     """Create a new project directory with template files.
 
     Initializes a new Brisk project with all necessary configuration files
-    and directory structure. Creates template files for algorithms, metrics,
-    data management, workflows, and evaluators.
+    and directory structure. Templates are tailored to the specified problem
+    type with appropriate default algorithms, metrics, and workflow.
 
     Parameters
     ----------
     project_name : str
         Name of the project directory to create
+    problem_type : str
+        The machine learning problem type (classification or regression)
 
     Notes
     -----
     Creates the following structure:
-    - .briskconfig : Project configuration file
+
+    - .brisk/ : Project metadata directory
+        - brisk.sqlite : Project database (empty)
+        - project.json : Project metadata for the UI
     - settings.py : Configuration settings with default experiment groups
-    - algorithms.py : Algorithm definitions using Brisk's built-in algorithms
-    - metrics.py : Metric definitions using Brisk's built-in metrics
+    - algorithms.py : Algorithm definitions for the chosen problem type
+    - metrics.py : Metric definitions for the chosen problem type
     - data.py : Data management setup with default parameters
     - evaluators.py : Template for custom evaluators
     - workflows/ : Directory for workflow definitions
         - workflow.py : Template workflow class
     - datasets/ : Directory for data storage
-
-    The created files contain working examples and can be customized
-    for specific project needs.
     """
-    project_dir = os.path.join(os.getcwd(), project_name)
-    os.makedirs(project_dir, exist_ok=True)
+    project_dir = pathlib.Path.cwd() / project_name
+    project_dir.mkdir(exist_ok=True)
+
+    _create_brisk_dir(project_dir, project_name, problem_type)
+    _create_settings(project_dir, problem_type)
+    _create_algorithms(project_dir, problem_type)
+    _create_metrics(project_dir, problem_type)
+    _create_data(project_dir)
+    _create_evaluators(project_dir)
+
+    (project_dir / "datasets").mkdir(exist_ok=True)
+
+    workflows_dir = project_dir / "workflows"
+    workflows_dir.mkdir(exist_ok=True)
+    _create_workflow(workflows_dir, problem_type)
+
+    print(f"A new {problem_type} project was created in: {project_dir}")
+    print("\nNext steps:")
+    print(f"  1. Add a dataset CSV to {project_dir / 'datasets/'}")
+    print("  2. Update settings.py with your dataset filename")
+    print("  3. Run `brisk run` to train your first model")
+
+
+def _create_brisk_dir(
+    project_dir: pathlib.Path,
+    project_name: str,
+    problem_type: str
+) -> None:
+    """Create the .brisk/ metadata directory with sqlite db and project.json."""
+    brisk_dir = project_dir / ".brisk"
+    brisk_dir.mkdir(exist_ok=True)
+
+    db_path = brisk_dir / "brisk.sqlite"
+    conn = sqlite3.connect(str(db_path))
+    conn.close()
+
+    project_json = {
+        "project_name": project_name,
+        "project_path": str(project_dir.resolve()),
+        "project_description": "",
+        "project_type": problem_type,
+        "datasets": [],
+    }
+    with open(
+        brisk_dir / "project.json", "w", encoding="utf-8"
+    ) as f:
+        json.dump(project_json, f, indent=2)
+
+
+def _create_settings(
+    project_dir: pathlib.Path, problem_type: str
+) -> None:
+    """Write settings.py with problem-type-appropriate defaults."""
+    if problem_type == "regression":
+        default_algorithm = "linear"
+    else:
+        default_algorithm = "logistic"
 
     with open(
-        os.path.join(project_dir, ".briskconfig"), "w", encoding="utf-8"
+        project_dir / "settings.py", "w", encoding="utf-8"
     ) as f:
-        f.write(f'project_name={project_name}\n')
-
-    with open(
-        os.path.join(project_dir, "settings.py"), "w", encoding="utf-8"
-    ) as f:
-        f.write("""# settings.py
+        f.write(f'''# settings.py
 from brisk.configuration.configuration import Configuration
 from brisk.configuration.configuration_manager import ConfigurationManager
 
 def create_configuration() -> ConfigurationManager:
     config = Configuration(
         default_workflow = "workflow",
-        default_algorithms = ["linear"],
+        default_algorithms = ["{default_algorithm}"],
     )
 
     config.add_experiment_group(
         name="group_name",
+        # Add your dataset filenames from datasets/ here,
+        # e.g. datasets=["my_data.csv"]
         datasets=[],
-        workflow="workflow"  
+        workflow="workflow"
     )
 
     return config.build()
-""")
+''')
+
+
+def _create_algorithms(
+    project_dir: pathlib.Path, problem_type: str
+) -> None:
+    """Write algorithms.py with only the relevant algorithm set."""
+    if problem_type == "regression":
+        constant = "REGRESSION_ALGORITHMS"
+    else:
+        constant = "CLASSIFICATION_ALGORITHMS"
 
     with open(
-        os.path.join(project_dir, "algorithms.py"), "w", encoding="utf-8"
+        project_dir / "algorithms.py", "w", encoding="utf-8"
     ) as f:
-        f.write("""# algorithms.py
+        f.write(f"""# algorithms.py
 import brisk
 
 ALGORITHM_CONFIG = brisk.AlgorithmCollection(
-    *brisk.REGRESSION_ALGORITHMS,
-    *brisk.CLASSIFICATION_ALGORITHMS
+    *brisk.{constant}
 )
 """)
 
+
+def _create_metrics(
+    project_dir: pathlib.Path, problem_type: str
+) -> None:
+    """Write metrics.py with only the relevant metric set."""
+    if problem_type == "regression":
+        constant = "REGRESSION_METRICS"
+    else:
+        constant = "CLASSIFICATION_METRICS"
+
     with open(
-        os.path.join(project_dir, "metrics.py"), "w", encoding="utf-8"
+        project_dir / "metrics.py", "w", encoding="utf-8"
     ) as f:
-        f.write("""# metrics.py
+        f.write(f"""# metrics.py
 import brisk
 
 METRIC_CONFIG = brisk.MetricManager(
-    *brisk.REGRESSION_METRICS,
-    *brisk.CLASSIFICATION_METRICS
+    *brisk.{constant}
 )
 """)
 
+
+def _create_data(project_dir: pathlib.Path) -> None:
+    """Write data.py with default DataManager settings."""
     with open(
-        os.path.join(project_dir, "data.py"), "w", encoding="utf-8"
+        project_dir / "data.py", "w", encoding="utf-8"
     ) as f:
         f.write("""# data.py
 from brisk.data.data_manager import DataManager
@@ -167,53 +255,146 @@ BASE_DATA_MANAGER = DataManager(
 )
 """)
 
-    datasets_dir = os.path.join(project_dir, "datasets")
-    os.makedirs(datasets_dir, exist_ok=True)
 
-    workflows_dir = os.path.join(project_dir, "workflows")
-    os.makedirs(workflows_dir, exist_ok=True)
+def _create_evaluators(project_dir: pathlib.Path) -> None:
+    """Write evaluators.py with the custom evaluator registration stub."""
+    with open(
+        project_dir / "evaluators.py", "w", encoding="utf-8"
+    ) as f:
+        f.write("""# evaluators.py
+from brisk.evaluation.evaluators.registry import EvaluatorRegistry
+from brisk import PlotEvaluator, MeasureEvaluator
+
+def register_custom_evaluators(registry: EvaluatorRegistry, plot_settings) -> None:
+    # registry.register(
+    # Initialize an evaluator instance here to register
+    # )
+    pass
+""")
+
+
+def _create_workflow(
+    workflows_dir: pathlib.Path, problem_type: str
+) -> None:
+    """Write workflow.py with problem-type-appropriate metric references."""
+    if problem_type == "regression":
+        metric = "MAE"
+    else:
+        metric = "accuracy"
 
     with open(
-        os.path.join(workflows_dir, "workflow.py"), "w", encoding="utf-8"
+        workflows_dir / "workflow.py", "w", encoding="utf-8"
     ) as f:
-        f.write("""# workflow.py
-# Define the workflow for training and evaluating models
-
+        f.write(f'''# workflow.py
 from brisk.training.workflow import Workflow
 
 class MyWorkflow(Workflow):
     def workflow(self, X_train, X_test, y_train, y_test, output_dir, feature_names):
         self.model.fit(self.X_train, self.y_train)
         self.evaluate_model_cv(
-            self.model, self.X_train, self.y_train, ["MAE"], "pre_tune_score"
+            self.model, self.X_train, self.y_train,
+            ["{metric}"], "pre_tune_score"
         )
         tuned_model = self.hyperparameter_tuning(
-            self.model, "grid", self.X_train, self.y_train, "MAE",
+            self.model, "grid", self.X_train, self.y_train, "{metric}",
             kf=5, num_rep=3, n_jobs=-1
         )
         self.evaluate_model(
-            tuned_model, self.X_test, self.y_test, ["MAE"], "post_tune_score"
+            tuned_model, self.X_test, self.y_test,
+            ["{metric}"], "post_tune_score"
         )
         self.plot_learning_curve(tuned_model, self.X_train, self.y_train)
         self.save_model(tuned_model, "tuned_model")
-""")
-    with open(
-        os.path.join(project_dir, "evaluators.py"), "w", encoding="utf-8"
-    ) as f:
-        f.write("""# evaluators.py
-# Define custom evaluation methods here to integrate with Brisk's builtin tools
-from brisk.evaluation.evaluators.registry import EvaluatorRegistry
-from brisk import PlotEvaluator, MeasureEvaluator
+''')
 
-def register_custom_evaluators(registry: EvaluatorRegistry, plot_settings) -> None:
-    # registry.register(
-    # Initalize an evaluator instance here to register
-    # )
-    pass
 
-""")
+@cli.command()
+@click.option("--port", type=int, default=8050, help="Port for the UI server.")
+@click.option(
+    "--create", "create_mode", is_flag=True,
+    help="Launch in create mode for new project setup."
+)
+@click.option(
+    "--no-browser", is_flag=True,
+    help="Don't open the browser automatically."
+)
+def ui(port: int, create_mode: bool, no_browser: bool) -> None:
+    """Launch the brisk web UI for the current project."""
+    try:
+        import brisk_ui  # pylint: disable=import-outside-toplevel
+    except ImportError:
+        print("Error: brisk-ui is not installed.")
+        print("Install it with:")
+        print("  pip install briskui")
+        print("  # or: pip install brisk-ml[ui]")
+        return
 
-    print(f'A new project was created in: {project_dir}')
+    if create_mode:
+        project_path = pathlib.Path.cwd()
+        project_path.mkdir(parents=True, exist_ok=True)
+        print(f"Create mode: projects will be created in {project_path}")
+    else:
+        try:
+            project_path = project.find_project_root()
+        except FileNotFoundError:
+            print("Error: Not inside a brisk project directory.")
+            print("Run this command from a brisk project, or use --create:")
+            print("  brisk ui --create")
+            return
+
+        db_path = project_path / ".brisk" / "brisk.sqlite"
+        if not db_path.exists():
+            print(f"Error: No brisk.sqlite found at {project_path}/.brisk/")
+            print("Use --create to start a new project:")
+            print("  brisk ui --create")
+            return
+
+    open_browser = not no_browser
+    print(f"Starting brisk UI on port {port}...")
+    print(f"Project: {project_path}")
+    brisk_ui.start_server(
+        project_path=project_path,
+        port=port,
+        create_mode=create_mode,
+        open_browser=open_browser,
+    )
+
+
+@cli.command()
+def migrate() -> None:
+    """Migrate a project from .briskconfig to the new .brisk/ format.
+
+    Converts a legacy Brisk project that uses .briskconfig to the new
+    .brisk/ directory structure containing brisk.sqlite and project.json.
+    The old .briskconfig file is removed after migration.
+    """
+    current = pathlib.Path.cwd()
+    brisk_dir = current / ".brisk"
+    config_path = current / ".briskconfig"
+
+    if brisk_dir.is_dir() and not config_path.exists():
+        print("This project already uses the new .brisk/ format.")
+        return
+
+    if not config_path.exists():
+        print("Error: No .briskconfig found in the current directory.")
+        print("Run this command from the root of a brisk project.")
+        return
+
+    if brisk_dir.is_dir() and config_path.exists():
+        response = input(
+            "Both .brisk/ and .briskconfig exist. Overwrite .brisk/ "
+            "contents? [y/N]: "
+        )
+        if response.strip().lower() != "y":
+            print("Migration cancelled.")
+            return
+
+    project.migrate_project(current)
+    print(f"Project migrated successfully in: {current}")
+    print("  Created .brisk/brisk.sqlite")
+    print("  Created .brisk/project.json")
+    print("  Removed .briskconfig")
 
 
 @cli.command()
